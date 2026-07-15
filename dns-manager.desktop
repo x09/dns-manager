@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Диспетчер DNS
+Name[en]=DNS Manager
+GenericName=Управление DNS Samba DC
+GenericName[en]=Samba DC DNS Management
+Comment=Просмотр и правка зон и записей DNS-сервера Samba DC
+Comment[en]=Browse and edit Samba DC DNS zones and records
+Exec=/usr/bin/dns-manager
+Icon=dns-manager
+Terminal=false
+Categories=System;Network;RemoteAccess;
+Keywords=dns;samba;domain;zone;record;
+StartupNotify=true

@@ -11,7 +11,23 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Пакет dnsmgr ищем в нескольких местах:
+#   1) рядом с самим скриптом (запуск из папки проекта);
+#   2) рядом с целью символической ссылки (если /usr/bin/dns-manager — ссылка);
+#   3) в стандартных каталогах установки.
+_CANDIDATE_DIRS = [
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.dirname(os.path.realpath(__file__)),
+    "/usr/share/dns-manager",
+    "/usr/local/share/dns-manager",
+    os.path.expanduser("~/.local/share/dns-manager"),
+]
+
+for _d in _CANDIDATE_DIRS:
+    if os.path.isfile(os.path.join(_d, "dnsmgr", "__init__.py")):
+        if _d not in sys.path:
+            sys.path.insert(0, _d)
+        break
 
 SAMBA_HINT = (
     "Не найдены python-биндинги Samba (модуль samba.dcerpc.dnsserver).\n\n"
