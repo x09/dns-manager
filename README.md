@@ -4,6 +4,9 @@
 Подключается к DNS-серверу, встроенному в контроллер домена **Samba DC**,
 по протоколу MS-DNSP (DCERPC).
 
+<img width="1186" height="783" alt="dns-manager-v3" src="https://github.com/user-attachments/assets/f20adf1b-6580-4521-a062-4ca9a2859a34" />
+
+
 ## Новое в версии 3.0
 
 - **Kerberos / GSSAPI.** При наличии действующего TGT (билета Kerberos)
