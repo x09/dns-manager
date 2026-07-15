@@ -69,6 +69,15 @@ chmod +x dns-manager.py   # один раз
 
 ```
 dns-manager.py          — исполняемый файл (точка входа)
+icons/
+    32x32/
+        dns-manager.png
+    64x64/
+        dns-manager.png
+    128x128/
+        dns-manager.png
+    256x256/
+        dns-manager.png
 dnsmgr/
     __init__.py
     backend.py          — RPC-протокол MS-DNSP, GSSAPI/Kerberos
