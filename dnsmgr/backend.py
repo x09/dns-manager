@@ -311,7 +311,13 @@ class DnsBackend:
     # ------------------------------------------------------------------
     # Подключение
     # ------------------------------------------------------------------
-    def connect(self, server, username, password):
+    def connect(self, server, username, password, use_kerberos=False):
+        """
+        Подключается к DNS-серверу.
+
+        use_kerberos=True — вход по действующему билету Kerberos (GSSAPI),
+        пароль не используется; иначе — обычная проверка логина/пароля (NTLM).
+        """
         server = server.strip()
         if not server:
             raise DnsBackendError("Не указано имя сервера.")
@@ -326,9 +332,15 @@ class DnsBackend:
         if username.strip():
             # Поддерживает формы: user, DOMAIN\user, user@realm
             creds.parse_string(username.strip())
-        creds.set_password(password)
+        if use_kerberos:
+            # Использовать имеющийся билет из кэша (ncacn через GSSAPI)
+            creds.set_kerberos_state(credentials.MUST_USE_KERBEROS)
+        else:
+            creds.set_kerberos_state(credentials.DONT_USE_KERBEROS)
+            creds.set_password(password)
 
-        binding = "ncacn_ip_tcp:%s[sign]" % server
+        # seal — подпись + шифрование канала; для GSSAPI требуется имя хоста
+        binding = "ncacn_ip_tcp:%s[seal]" % server
         try:
             self.dns_conn = dnsserver.dnsserver(binding, lp, creds)
         except RuntimeError as e:
