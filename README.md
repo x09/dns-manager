@@ -58,14 +58,6 @@
 # apt-get install python3-modules-tkinter python3-module-samba
 ```
 
-Для входа по Kerberos дополнительно нужен пакет с `klist`:
-
-```
-# apt-get install krb5-workstation
-```
-
-(как правило уже установлен, если машина введена в домен)
-
 ## Запуск
 
 ```
