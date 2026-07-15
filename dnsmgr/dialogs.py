@@ -227,28 +227,38 @@ RECORD_TYPE_INFO = {
 class RecordDialog(ModalDialog):
     """Создание или изменение DNS-записи."""
 
-    def __init__(self, parent, zone, is_reverse, record=None):
+    def __init__(self, parent, zone, is_reverse, record=None, folder=""):
         """
         zone       — имя зоны;
         is_reverse — зона обратного просмотра;
-        record     — существующая запись (dict из backend.get_records)
-                     для режима редактирования, None — создание.
+        record     — существующая запись (dict из backend.get_node)
+                     для режима редактирования, None — создание;
+        folder     — путь текущей папки внутри зоны ('' — корень зоны);
+                     имена в диалоге задаются относительно этой папки.
         """
         self.zone = zone
         self.is_reverse = is_reverse
         self.record = record
+        self.folder = (folder or "").rstrip(".")
         self._field_vars = {}
         self._field_widgets = []
-        title = ("Изменение записи — %s" % zone if record
-                 else "Новая запись — %s" % zone)
+        location = "%s/%s" % (zone, self.folder) if self.folder else zone
+        title = ("Изменение записи — %s" % location if record
+                 else "Новая запись — %s" % location)
         super().__init__(parent, title)
 
     # ------------------------------------------------------------------
     def build_body(self, master):
         master.columnconfigure(1, weight=1)
 
+        if self.folder:
+            ttk.Label(master, foreground="#666",
+                      text="Папка: %s (имена — относительно неё)"
+                           % self.folder).grid(
+                row=0, column=0, columnspan=2, sticky="w", **PAD)
+
         ttk.Label(master, text="Тип записи:").grid(
-            row=0, column=0, sticky="e", **PAD)
+            row=1, column=0, sticky="e", **PAD)
         types = list(backend.EDITABLE_TYPES)
         default_type = "PTR" if self.is_reverse else "A"
         if self.record:
@@ -257,29 +267,29 @@ class RecordDialog(ModalDialog):
         self.type_combo = ttk.Combobox(
             master, textvariable=self.type_var, values=types,
             state="disabled" if self.record else "readonly", width=10)
-        self.type_combo.grid(row=0, column=1, sticky="w", **PAD)
+        self.type_combo.grid(row=1, column=1, sticky="w", **PAD)
         self.type_combo.bind("<<ComboboxSelected>>",
                              lambda e: self._rebuild_fields())
 
         self.type_hint = ttk.Label(master, text="", foreground="#666",
                                    wraplength=380)
-        self.type_hint.grid(row=1, column=0, columnspan=2, sticky="w",
+        self.type_hint.grid(row=2, column=0, columnspan=2, sticky="w",
                             padx=8)
 
         # Контейнер для полей конкретного типа
         self.fields_frame = ttk.Frame(master)
-        self.fields_frame.grid(row=2, column=0, columnspan=2, sticky="we")
+        self.fields_frame.grid(row=3, column=0, columnspan=2, sticky="we")
         self.fields_frame.columnconfigure(1, weight=1)
 
-        ttk.Separator(master).grid(row=3, column=0, columnspan=2,
+        ttk.Separator(master).grid(row=4, column=0, columnspan=2,
                                    sticky="we", padx=8, pady=6)
         ttk.Label(master, text="TTL (секунды):").grid(
-            row=4, column=0, sticky="e", **PAD)
+            row=5, column=0, sticky="e", **PAD)
         self.ttl_var = tk.StringVar(
             value=str(self.record["ttl"]) if self.record else "900")
         ttk.Spinbox(master, textvariable=self.ttl_var, from_=0,
                     to=2 ** 31 - 1, increment=60, width=12).grid(
-            row=4, column=1, sticky="w", **PAD)
+            row=5, column=1, sticky="w", **PAD)
 
         self._rebuild_fields()
 
@@ -316,10 +326,11 @@ class RecordDialog(ModalDialog):
         f = rec["fields"] if rec else {}
         name = rec["name"] if rec else ""
         name_disabled = rec is not None
+        here = "сама папка" if self.folder else "сама зона"
         r = 0
 
         if rtype in ("A", "AAAA"):
-            self._add_field(r, "Имя (пусто или @ — сама зона):", "name",
+            self._add_field(r, "Имя (пусто или @ — %s):" % here, "name",
                             name, disabled=name_disabled); r += 1
             self._add_field(
                 r, "IPv4-адрес:" if rtype == "A" else "IPv6-адрес:",
@@ -332,19 +343,21 @@ class RecordDialog(ModalDialog):
                     variable=self.ptr_var).grid(
                     row=r, column=0, columnspan=2, sticky="w", **PAD)
         elif rtype == "CNAME":
-            self._add_field(r, "Псевдоним (имя относительно зоны):", "name",
+            self._add_field(r, "Псевдоним (имя относительно %s):" %
+                            ("папки" if self.folder else "зоны"), "name",
                             name, disabled=name_disabled); r += 1
             self._add_field(r, "FQDN целевого узла:", "target",
                             f.get("target", ""))
         elif rtype == "MX":
-            self._add_field(r, "Имя (обычно @ — сама зона):", "name",
+            self._add_field(r, "Имя (обычно @ — %s):" % here, "name",
                             name or "@", disabled=name_disabled); r += 1
             self._add_field(r, "FQDN почтового сервера:", "exchange",
                             f.get("exchange", "")); r += 1
             self._add_field(r, "Приоритет (Preference):", "preference",
                             f.get("preference", 10), spin=True)
         elif rtype == "PTR":
-            label = ("IP-адрес (или последние октеты):" if self.is_reverse
+            label = ("IP-адрес (или последние октеты):"
+                     if self.is_reverse and not self.folder
                      else "Имя записи:")
             self._add_field(r, label, "name", name,
                             disabled=name_disabled); r += 1
@@ -367,7 +380,7 @@ class RecordDialog(ModalDialog):
             self._add_field(r, "Узел, предоставляющий службу (FQDN):",
                             "target", f.get("target", ""))
         elif rtype == "TXT":
-            self._add_field(r, "Имя записи (пусто или @ — сама зона):",
+            self._add_field(r, "Имя записи (пусто или @ — %s):" % here,
                             "name", name, disabled=name_disabled); r += 1
             self._add_field(r, "Текст:", "text", f.get("text", ""), width=44)
 
@@ -398,7 +411,8 @@ class RecordDialog(ModalDialog):
         else:
             name = vals.pop("name", "") or "@"
 
-        if rtype == "PTR" and self.is_reverse and not self.record:
+        if (rtype == "PTR" and self.is_reverse and not self.record
+                and not self.folder):
             # Пользователь мог ввести полный IP — преобразуем
             name = backend.ptr_relative_name(name, self.zone)
 
@@ -406,7 +420,7 @@ class RecordDialog(ModalDialog):
         rec_obj = backend.build_record(rtype, vals, self.ttl_var.get())
         return {
             "rtype": rtype,
-            "name": name,
+            "name": name,           # имя относительно текущей папки
             "ttl": self.ttl_var.get(),
             "fields": vals,
             "record": rec_obj,

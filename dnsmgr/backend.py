@@ -4,6 +4,10 @@
 
 Используются python-биндинги Samba (пакет python3-module-samba в ОС Альт).
 Логика вызовов повторяет реализацию `samba-tool dns` (samba/netcmd/dns.py).
+
+Версия 2.0: поддержка вложенных узлов зоны (папок) — служебные разделы
+_sites, _tcp, _udp, DomainDnsZones, ForestDnsZones и т.д. раскрываются
+и опрашиваются отдельно, как в Microsoft DNS Manager.
 """
 
 import ipaddress
@@ -158,6 +162,37 @@ def validate_name(name):
     if not re.fullmatch(r"[A-Za-z0-9а-яА-ЯёЁ_\-.]{1,255}", name):
         raise DnsBackendError("Недопустимое имя записи: %r" % name)
     return name
+
+
+def node_names(node_path, raw_name):
+    """
+    Нормализует имя узла из ответа сервера.
+
+    node_path — путь опрошенного узла относительно зоны ('' — корень зоны);
+    raw_name  — имя, вернувшееся в DNS_RPC_RECORDS.dnsNodeName.
+
+    Возвращает (display, full):
+      display — имя для показа, относительно опрошенного узла ('@' — сам узел);
+      full    — полный путь узла относительно зоны (для RPC-операций).
+    """
+    name = (raw_name or "").rstrip(".")
+    path = (node_path or "").rstrip(".")
+    if name in ("", "@"):
+        return "@", (path or "@")
+    if path:
+        if name.lower().endswith("." + path.lower()):
+            return name[: -(len(path) + 1)], name
+        return name, "%s.%s" % (name, path)
+    return name, name
+
+
+def full_record_name(node_path, name):
+    """Полное имя записи относительно зоны по имени в текущей папке."""
+    path = (node_path or "").rstrip(".")
+    name = (name or "@").strip()
+    if name == "@":
+        return path or "@"
+    return "%s.%s" % (name, path) if path else name
 
 
 def _validate_fqdn(value, what):
@@ -368,35 +403,48 @@ class DnsBackend:
             "DeleteZoneFromDs", dnsserver.DNSSRV_TYPEID_NULL, None)
 
     # ------------------------------------------------------------------
-    # Записи
+    # Узлы и записи
     # ------------------------------------------------------------------
-    def get_records(self, zone_name):
+    def get_node(self, zone_name, node_path=""):
         """
-        Все записи зоны. Возвращает список словарей:
-        {name, type, type_name, data, ttl, fields, raw}
+        Записи и дочерние папки узла зоны.
+
+        node_path — путь узла относительно зоны ('' — корень зоны),
+        например 'site1._sites.DomainDnsZones'.
+
+        Возвращает словарь:
+          {'records': [...], 'folders': [{'name': ..., 'path': ...}, ...]}
+
+        records — записи самого узла и его непосредственных потомков;
+        folders — потомки, у которых есть собственные дочерние узлы
+                  (служебные разделы _sites, _tcp и т.п.).
         """
         self._check()
+        query_name = node_path or "@"
         try:
             _buflen, res = self.dns_conn.DnssrvEnumRecords2(
-                CLIENT_VERSION, 0, self.server, zone_name, "@", None,
+                CLIENT_VERSION, 0, self.server, zone_name, query_name, None,
                 dnsp.DNS_TYPE_ALL, dnsserver.DNS_RPC_VIEW_AUTHORITY_DATA,
                 None, None)
         except RuntimeError as e:
             code = e.args[0] if e.args and isinstance(e.args[0], int) else 0
             if (code & 0xFFFF) in (9714, 9715):  # нет записей
-                return []
+                return {"records": [], "folders": []}
             raise
-        result = []
+        records, folders = [], []
         if res is None:
-            return result
+            return {"records": records, "folders": folders}
         for node in res.rec:
-            node_name = node.dnsNodeName.str or "@"
+            display, full = node_names(node_path, node.dnsNodeName.str)
+            child_count = getattr(node, "dwChildCount", 0)
+            if child_count and display != "@":
+                folders.append({"name": display, "path": full})
             for j in range(node.wRecordCount):
                 rec = node.records[j]
-                type_name = TYPE_NAMES.get(rec.wType,
-                                           "TYPE%d" % rec.wType)
-                result.append({
-                    "name": node_name,
+                type_name = TYPE_NAMES.get(rec.wType, "TYPE%d" % rec.wType)
+                records.append({
+                    "name": display,        # имя в текущей папке ('@' — узел)
+                    "full_name": full,      # полный путь относительно зоны
                     "type": rec.wType,
                     "type_name": type_name,
                     "data": record_display_data(rec),
@@ -404,9 +452,11 @@ class DnsBackend:
                     "fields": record_fields(rec),
                     "raw": rec,
                 })
-        return result
+        folders.sort(key=lambda f: f["name"].lower())
+        return {"records": records, "folders": folders}
 
     def add_record(self, zone_name, name, rec):
+        """name — полное имя относительно зоны (или '@')."""
         self._check()
         add_buf = dnsserver.DNS_RPC_RECORD_BUF()
         add_buf.rec = rec
