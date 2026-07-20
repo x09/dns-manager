@@ -1,6 +1,6 @@
 # Диспетчер DNS для Samba DC
 
-Графическая утилита для Linux — аналог **Microsoft DNS Manager**.
+Графическая утилита для GNU/Linux — аналог **Microsoft DNS Manager**.
 Подключается к DNS-серверу, встроенному в контроллер домена **Samba DC**,
 по протоколу MS-DNSP (DCERPC).
 
