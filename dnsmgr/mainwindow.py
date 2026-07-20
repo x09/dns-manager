@@ -2,6 +2,11 @@
 """
 Главное окно DNS Manager (в стиле Microsoft DNS Manager).
 
+Версия 3.2:
+  * пиктограммы записей в правой панели: обычная запись, папка,
+    запись «только чтение» (NS, SOA);
+  * имя сервера в дереве выделено жирным шрифтом.
+
 Версия 3.0:
   * несколько серверов одновременно — каждый отдельный узел в дереве;
   * вход по логину/паролю или по билету Kerberos (GSSAPI);
@@ -12,6 +17,7 @@
 import queue
 import threading
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import messagebox, ttk
 
 from . import backend, config, icons
@@ -62,7 +68,8 @@ class MainWindow:
     def _load_icons(self):
         self.icon = {n: icons.get(n) for n in (
             "connect", "refresh", "newzone", "delzone",
-            "newrec", "delrec", "editrec")}
+            "newrec", "delrec", "editrec",
+            "rec16", "folder16", "lock16")}
 
     # ==================================================================
     # Интерфейс
@@ -134,14 +141,23 @@ class MainWindow:
         self.tree.bind("<<TreeviewOpen>>", self._on_tree_open)
         self.tree.bind("<Button-3>", self._tree_context_menu)
 
+        # Жирный шрифт для имени сервера в дереве
+        base_font = tkfont.nametofont("TkDefaultFont")
+        self._bold_font = base_font.copy()
+        self._bold_font.configure(weight="bold")
+        self.tree.tag_configure("server", font=self._bold_font)
+
         right = ttk.Frame(panes)
-        cols = ("name", "type", "data", "ttl")
-        self.records = ttk.Treeview(right, columns=cols, show="headings", selectmode="browse")
-        self.records.heading("name", text="Имя", command=lambda: self._sort_records("name"))
+        # Колонка #0 («дерево») показывает пиктограмму и имя записи
+        cols = ("type", "data", "ttl")
+        self.records = ttk.Treeview(right, columns=cols, show="tree headings",
+                                    selectmode="browse")
+        self.records.heading("#0", text="Имя",
+                             command=lambda: self._sort_records("name"))
         self.records.heading("type", text="Тип", command=lambda: self._sort_records("type_name"))
         self.records.heading("data", text="Данные", command=lambda: self._sort_records("data"))
         self.records.heading("ttl", text="TTL", command=lambda: self._sort_records("ttl"))
-        self.records.column("name", width=240, anchor="w")
+        self.records.column("#0", width=260, anchor="w")
         self.records.column("type", width=70, anchor="w", stretch=False)
         self.records.column("data", width=430, anchor="w")
         self.records.column("ttl", width=70, anchor="e", stretch=False)
@@ -277,7 +293,8 @@ class MainWindow:
         label = "%s  (%s)" % (addr, "Kerberos" if st.kerberos else st.username)
         if self.tree.exists(iid):
             self.tree.delete(iid)
-        self.tree.insert("", "end", iid=iid, text=label, open=True)
+        self.tree.insert("", "end", iid=iid, text=label, open=True,
+                         tags=("server",))
         self.tree.insert(iid, "end", iid="fwd|" + addr,
                          text="Зоны прямого просмотра", open=True)
         self.tree.insert(iid, "end", iid="rev|" + addr,
@@ -469,11 +486,16 @@ class MainWindow:
             return
         for f in st.folders:
             self.records.insert("", "end", iid="folder|" + f["path"],
-                                values=(f["name"], "", "(папка)", ""))
+                                text=" " + f["name"],
+                                image=self.icon.get("folder16") or "",
+                                values=("", "(папка)", ""))
         for idx, r in enumerate(st.records):
             name = PARENT_LABEL if r["name"] == "@" else r["name"]
+            editable = r["type_name"] in backend.EDITABLE_TYPES
+            img = self.icon.get("rec16" if editable else "lock16") or ""
             self.records.insert("", "end", iid=str(idx),
-                                values=(name, r["type_name"], r["data"], r["ttl"]))
+                                text=" " + name, image=img,
+                                values=(r["type_name"], r["data"], r["ttl"]))
 
     def _update_tree_children(self, addr, zone, path, folders):
         parent = self._zone_iid(addr, zone, path)

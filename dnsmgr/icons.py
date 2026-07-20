@@ -67,6 +67,25 @@ _ICON_DATA = {
         "6x3eOO1/jLvc/yg3ObChMMOIznrIhcPDu9f/x3gogA0DGQpyKcmFA3LxlZ+R3AE07He0u9zf+iSz"
         "GWQVX+gAaKA2CA9YAQ0AMAuAlx3qu+cAAAAASUVORK5CYII="
     ),
+    "rec16": (
+        "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjklEQVR42mNgoCaoqGjqmTNn8f4l"
+        "S1ZjxQsXrthfW9u2BqiOHasBy5ev/ffnz5//+PDu3Qf+Aw2wwWrArl37/xMyAKQGaIADTgOevvn6"
+        "v3julf9FWPDETXcJGwCy5cv3X/+/fMPEP37+JmzAh88//m8+9RwrPnLtDR0MoNgLVAlEiqJxYA2g"
+        "OClTnJnIAQDq9fp+l/haNAAAAABJRU5ErkJggg=="
+    ),
+    "folder16": (
+        "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAcElEQVR42mNgGB5gWp5IJBAfAuL9"
+        "SHgZKQb0AfF/LLgBB64EYh24AQsrpN5eWGT8/8pSU6IwSC1ID9yAvRM1/7/Y4UASBumBG7B/shbJ"
+        "BoD0jBqAZMDGNqW/pBoA0oOckOpnFoqhp0ScGKq2fnDkIwDbLXRQSI42SwAAAABJRU5ErkJggg=="
+    ),
+    "lock16": (
+        "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABB0lEQVR42mNgoCaoqGjqmTpt3v45"
+        "c5dixbNmLdpfU9O2BqiOHasB8+Yv//fk2av/+PD6Ddv/Aw2wwWrAuvXb/hMyAKQGaIADTgNu3X34"
+        "f9X6HVjx9t2HCRsAsuXh4+co+P7Dp//PXrj6/+79J4QNACk+dvLC/6Mnz4Pxxq17/qdllfwPjUr5"
+        "H5uY/b+ppYd4Aw4fP/c/PiXvf0NL7/8duw/9nzJ9/v+w6NT/6ZnFxHnhyvU7/xPT8v/3TZr1f+6C"
+        "5f9nz1/2PyI2/X9MQpYvUYHY1j0F7HQsuImoaATZCtKQnlMG9k5VfQfMgAb6GoAFNxCVlI8cP/M/"
+        "Kj4Tw4DwmLRc2mQmcgAA7wa2fpAOV6EAAAAASUVORK5CYII="
+    ),
 }
 
 _cache = {}

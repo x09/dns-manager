@@ -1,13 +1,18 @@
 # Диспетчер DNS для Samba DC
 
-Графическая утилита для GNU/Linux — аналог **Microsoft DNS Manager**.
+Графическая утилита для Linux — аналог **Microsoft DNS Manager**.
 Подключается к DNS-серверу, встроенному в контроллер домена **Samba DC**,
 по протоколу MS-DNSP (DCERPC).
 
-<img width="1186" height="783" alt="dns-manager-v3" src="https://github.com/user-attachments/assets/f20adf1b-6580-4521-a062-4ca9a2859a34" />
+## Новое в версии 3.2
 
+- **Пиктограммы записей в правой панели.** Три вида: обычная запись
+  (A, AAAA, CNAME, MX, PTR, SRV, TXT) — документ с текстом; папка
+  (вложенный раздел зоны) — жёлтая папка; запись «только чтение»
+  (NS, SOA — управляются сервером) — серый документ с замком.
+- **Имя сервера в дереве выделено жирным шрифтом.**
 
-## Новое в версии 3.1
+## Новое в версии 3.0
 
 - **Kerberos / GSSAPI.** При наличии действующего TGT (билета Kerberos)
   в диалоге подключения появляется флажок «Использовать данные Kerberos
@@ -65,21 +70,16 @@ chmod +x dns-manager.py   # один раз
 ./dns-manager.py
 ```
 
-или установить rpm пакет и выбрать в меню приложений "Диспетчер DNS"
-
 ## Состав файлов
 
 ```
 dns-manager.py          — исполняемый файл (точка входа)
+dns-manager.desktop     — ярлык приложения (шаблон)
 icons/
-    32x32/
-        dns-manager.png
-    64x64/
-        dns-manager.png
-    128x128/
-        dns-manager.png
-    256x256/
-        dns-manager.png
+    32x32/dns-manager.png
+    64x64/dns-manager.png
+    128x128/dns-manager.png
+    256x256/dns-manager.png
 dnsmgr/
     __init__.py
     backend.py          — RPC-протокол MS-DNSP, GSSAPI/Kerberos
@@ -89,3 +89,22 @@ dnsmgr/
     dialogs.py          — диалоги (выбор сервера, зоны, записи)
     mainwindow.py       — главное окно (мультисервер, дерево, записи)
 ```
+
+## Установка в систему (ярлык и иконки)
+
+Иконки приложения лежат в `icons/<размер>/dns-manager.png` и предназначены
+для размещения в стандартной теме hicolor:
+
+```
+# for s in 32x32 64x64 128x128 256x256; do
+    install -Dm644 icons/$s/dns-manager.png \
+        /usr/share/icons/hicolor/$s/apps/dns-manager.png
+  done
+# install -Dm755 dns-manager.py /usr/share/dns-manager/dns-manager.py
+# cp -r dnsmgr /usr/share/dns-manager/
+# install -Dm644 dns-manager.desktop /usr/share/applications/dns-manager.desktop
+# gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
+```
+
+В `dns-manager.desktop` указан путь `Exec=/usr/share/dns-manager/dns-manager.py` —
+поправьте, если размещаете программу в другом каталоге.
