@@ -273,14 +273,16 @@ class MainWindow:
 
         def work():
             be.connect(spec["server"], spec["username"],
-                       spec["password"], use_kerberos=spec["kerberos"])
+                       spec["password"], use_kerberos=spec["kerberos"],
+                       realm=spec.get("realm", ""))
             return be.list_zones()
 
         def done(zones):
             st = ServerState(be, spec["username"], spec["kerberos"])
             st.forward, st.reverse = zones
             self.servers[addr] = st
-            config.save_server(addr, spec["username"], spec["kerberos"])
+            config.save_server(addr, spec["username"], spec["kerberos"],
+                               spec.get("realm", ""))
             self._add_server_node(addr)
             self._select_server(addr)
             self._update_status()

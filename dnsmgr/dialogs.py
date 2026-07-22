@@ -121,8 +121,8 @@ class ServerChooserDialog(ModalDialog):
 
         ttk.Label(cf, text="Пользователь:").grid(row=1, column=0, sticky="e", **PAD)
         self.user_var = tk.StringVar()
-        ttk.Entry(cf, textvariable=self.user_var, width=28).grid(
-            row=1, column=1, sticky="we", **PAD)
+        self.user_entry = ttk.Entry(cf, textvariable=self.user_var, width=28)
+        self.user_entry.grid(row=1, column=1, sticky="we", **PAD)
         ttk.Label(cf, text="(user, DOMAIN\\user, user@realm)",
                   foreground="#666").grid(row=2, column=1, sticky="w", padx=8)
 
@@ -145,6 +145,8 @@ class ServerChooserDialog(ModalDialog):
         elif self._saved:
             self.lb.selection_set(0)
             self._on_lb_select()
+        else:
+            self._on_krb_toggle()
 
     def _fill_form(self, spec):
         self.srv_var.set(spec.get("server", ""))
@@ -162,11 +164,15 @@ class ServerChooserDialog(ModalDialog):
             self._fill_form(self._saved[idx])
 
     def _on_krb_toggle(self):
-        if self.krb_var.get():
+        use_krb = self.krb_var.get()
+        if use_krb:
+            # Имя пользователя и пароль берутся из билета — поля не нужны.
             self.pass_entry.config(state="disabled")
             self.pass_var.set("")
+            self.user_entry.config(state="disabled")
         else:
             self.pass_entry.config(state="normal")
+            self.user_entry.config(state="normal")
 
     def _remove_selected(self):
         from . import config as cfg

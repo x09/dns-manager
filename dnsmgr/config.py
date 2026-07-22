@@ -7,6 +7,7 @@
     [1.2.3.4]
     user=login
     kerberos=false
+    realm=TEST.ALT
 
 Пароль намеренно не сохраняется.
 """
@@ -40,6 +41,7 @@ def load_servers():
                     "server": name,
                     "username": sec.get("user", ""),
                     "kerberos": _as_bool(sec.get("kerberos", "false")),
+                    "realm": sec.get("realm", ""),
                 })
     except (OSError, configparser.Error):
         pass
@@ -57,7 +59,7 @@ def _write(parser):
         pass
 
 
-def save_server(server, username, kerberos):
+def save_server(server, username, kerberos, realm=""):
     """Добавляет или обновляет секцию сервера (сохраняется после подключения)."""
     parser = configparser.ConfigParser()
     try:
@@ -68,6 +70,7 @@ def save_server(server, username, kerberos):
         parser.add_section(server)
     parser[server]["user"] = username or ""
     parser[server]["kerberos"] = "true" if kerberos else "false"
+    parser[server]["realm"] = realm or ""
     _write(parser)
 
 
