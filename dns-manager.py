@@ -70,6 +70,11 @@ def main():
     except ImportError:
         fail(SAMBA_HINT)
 
+    # Инициализация локализации ДО импорта UI-модулей, чтобы _() был
+    # доступен во всех модулях. Язык: сохранённый → локаль ОС → английский.
+    from dnsmgr import config, i18n
+    i18n.setup(config.load_language())
+
     from dnsmgr.mainwindow import main as run
     run()
 
