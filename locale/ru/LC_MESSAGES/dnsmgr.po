@@ -1,0 +1,514 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dns-manager 3.4\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "app.title"
+msgstr "Диспетчер DNS — Samba DC"
+
+msgid "btn.cancel"
+msgstr "Отмена"
+
+msgid "btn.connect"
+msgstr "Подключиться"
+
+msgid "btn.delete"
+msgstr "Удалить"
+
+msgid "btn.edit_record"
+msgstr "Изменить запись"
+
+msgid "btn.new_record"
+msgstr "Создать запись"
+
+msgid "btn.new_zone"
+msgstr "Создать зону"
+
+msgid "btn.ok"
+msgstr "ОК"
+
+msgid "col.data"
+msgstr "Данные"
+
+msgid "col.name"
+msgstr "Имя"
+
+msgid "col.type"
+msgstr "Тип"
+
+msgid "common.kerberos"
+msgstr "Kerberos"
+
+msgid "common.parent_label"
+msgstr "(совпадает с родительской папкой)"
+
+msgid "common.ttl"
+msgstr "TTL"
+
+msgid "common.user_placeholder"
+msgstr "<пользователь>"
+
+msgid "data.soa"
+msgstr "[%d], основной сервер: %s, ответственный: %s"
+
+msgid "data.unknown_type"
+msgstr "<данные типа 0x%x>"
+
+msgid "dlg.record.alias"
+msgstr "Псевдоним:"
+
+msgid "dlg.record.cname_target"
+msgstr "FQDN целевого узла:"
+
+msgid "dlg.record.here_folder"
+msgstr "сама папка"
+
+msgid "dlg.record.here_zone"
+msgstr "сама зона"
+
+msgid "dlg.record.ipv4"
+msgstr "IPv4-адрес:"
+
+msgid "dlg.record.ipv6"
+msgstr "IPv6-адрес:"
+
+msgid "dlg.record.make_ptr"
+msgstr "Создать связанную PTR-запись"
+
+msgid "dlg.record.mx_exchange"
+msgstr "FQDN почтового сервера:"
+
+msgid "dlg.record.name_a"
+msgstr "Имя (пусто или @ — %s):"
+
+msgid "dlg.record.name_at"
+msgstr "Имя (@ — %s):"
+
+msgid "dlg.record.port"
+msgstr "Порт:"
+
+msgid "dlg.record.priority"
+msgstr "Приоритет:"
+
+msgid "dlg.record.ptr_host"
+msgstr "Имя узла (FQDN):"
+
+msgid "dlg.record.ptr_ip"
+msgstr "IP-адрес (или последние октеты):"
+
+msgid "dlg.record.ptr_name"
+msgstr "Имя записи:"
+
+msgid "dlg.record.srv_name"
+msgstr "Служба.протокол:"
+
+msgid "dlg.record.srv_protocol"
+msgstr "Протокол:"
+
+msgid "dlg.record.srv_service"
+msgstr "Служба (например _ldap):"
+
+msgid "dlg.record.srv_target"
+msgstr "Узел службы (FQDN):"
+
+msgid "dlg.record.title_edit"
+msgstr "Изменение записи — %s"
+
+msgid "dlg.record.title_new"
+msgstr "Новая запись — %s"
+
+msgid "dlg.record.ttl"
+msgstr "TTL (секунды):"
+
+msgid "dlg.record.txt_text"
+msgstr "Текст:"
+
+msgid "dlg.record.type"
+msgstr "Тип записи:"
+
+msgid "dlg.record.weight"
+msgstr "Вес:"
+
+msgid "dlg.server.host"
+msgstr "Сервер (имя или IP):"
+
+msgid "dlg.server.params"
+msgstr "Параметры подключения"
+
+msgid "dlg.server.password"
+msgstr "Пароль:"
+
+msgid "dlg.server.saved"
+msgstr "Сохранённые серверы"
+
+msgid "dlg.server.ticket_none"
+msgstr "✗ Билет Kerberos не найден"
+
+msgid "dlg.server.ticket_obtained"
+msgstr "получен"
+
+msgid "dlg.server.ticket_ok"
+msgstr "✓ Билет Kerberos: %s"
+
+msgid "dlg.server.title"
+msgstr "Подключение к серверу DNS"
+
+msgid "dlg.server.use_kerberos"
+msgstr "Использовать данные Kerberos для входа"
+
+msgid "dlg.server.user"
+msgstr "Пользователь:"
+
+msgid "dlg.server.user_hint"
+msgstr "(user, DOMAIN\\user, user@realm)"
+
+msgid "dlg.zone.forward"
+msgstr "Зона прямого просмотра"
+
+msgid "dlg.zone.note"
+msgstr "Зона будет создана как основная (primary), интегрированная в AD."
+
+msgid "dlg.zone.preview"
+msgstr "Имя зоны: %s"
+
+msgid "dlg.zone.prompt_forward"
+msgstr "Имя зоны (например, corp.example.ru):"
+
+msgid "dlg.zone.prompt_reverse"
+msgstr "ИД сети (192.168.1, 10.0.0.0/16) или *.in-addr.arpa:"
+
+msgid "dlg.zone.reverse"
+msgstr "Зона обратного просмотра (reverse)"
+
+msgid "dlg.zone.title"
+msgstr "Создание новой зоны"
+
+msgid "err.access_denied"
+msgstr "Отказано в доступе. Проверьте права учётной записи (нужно членство в группе Domain Admins или DnsAdmins)."
+
+msgid "err.bad_credentials"
+msgstr "Неверное имя пользователя или пароль."
+
+msgid "err.bad_fqdn"
+msgstr "Укажите корректное FQDN: %s."
+
+msgid "err.bad_ipv4"
+msgstr "Некорректный IPv4-адрес."
+
+msgid "err.bad_ipv6"
+msgstr "Некорректный IPv6-адрес."
+
+msgid "err.bad_netid"
+msgstr "Некорректный ИД сети: %r. Примеры: 192.168.1, 10.0.0.0/16, 2001:db8::/32."
+
+msgid "err.bad_record_name"
+msgstr "Недопустимое имя записи: %r"
+
+msgid "err.bad_zone_name"
+msgstr "Недопустимое имя зоны: %r"
+
+msgid "err.connect_timeout"
+msgstr "Не удалось подключиться к серверу (таймаут/обрыв соединения)."
+
+msgid "err.field_not_number"
+msgstr "Поле «%s» должно быть числом."
+
+msgid "err.field_range"
+msgstr "Поле «%s»: значение от %d до %d."
+
+msgid "err.ip_not_in_zone"
+msgstr "IP-адрес %s не принадлежит зоне %s."
+
+msgid "err.krb_keyring"
+msgstr "Не удалось войти по Kerberos: билет хранится в кэше типа «%s», а клиентские библиотеки Samba не умеют с ним работать.\n\nПереключите кэш билетов на файловый. В /etc/krb5.conf, секция [libdefaults]:\n    default_ccache_name = FILE:/tmp/krb5cc_%%{uid}\nзатем заново выполните kinit.\n\nЛибо разово перед запуском:\n    KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u) kinit %s"
+
+msgid "err.krb_no_fqdn"
+msgstr "Для входа по Kerberos не удалось определить имя (FQDN) контроллера домена по адресу %s. Укажите сервер по имени (например dc.test.alt) или настройте обратную зону DNS."
+
+msgid "err.name_absent"
+msgstr "Имя не существует в зоне."
+
+msgid "err.netid_form"
+msgstr "Укажите ИД сети в виде «192.168.1», «10.0.0.0/16» или готовое имя зоны «1.168.192.in-addr.arpa»."
+
+msgid "err.no_server_name"
+msgstr "Укажите имя или адрес сервера."
+
+msgid "err.no_username"
+msgstr "Укажите имя пользователя."
+
+msgid "err.not_connected"
+msgstr "Нет подключения к серверу."
+
+msgid "err.record_absent"
+msgstr "DNS-запись не найдена."
+
+msgid "err.record_exists"
+msgstr "Такая DNS-запись уже существует."
+
+msgid "err.rev_ipv4_mask"
+msgstr "Для обратной зоны IPv4 маска должна быть /8, /16 или /24."
+
+msgid "err.rev_ipv6_prefix"
+msgstr "Для обратной зоны IPv6 длина префикса должна быть кратна 4."
+
+msgid "err.rpc_unavailable"
+msgstr "RPC-сервер недоступен. Проверьте имя сервера и сетевое подключение."
+
+msgid "err.rtype_unsupported"
+msgstr "Тип записи %s не поддерживается."
+
+msgid "err.server_name_missing"
+msgstr "Не указано имя сервера."
+
+msgid "err.server_unreachable"
+msgstr "Сервер не найден или недоступен."
+
+msgid "err.srv_no_service"
+msgstr "Укажите имя службы."
+
+msgid "err.txt_empty"
+msgstr "Текст TXT-записи не может быть пустым."
+
+msgid "err.zone_absent"
+msgstr "Указанная зона не существует."
+
+msgid "err.zone_bad_type"
+msgstr "Недопустимый тип зоны."
+
+msgid "err.zone_empty"
+msgstr "Заполните поле имени зоны."
+
+msgid "err.zone_exists"
+msgstr "Зона с таким именем уже существует."
+
+msgid "err.zone_reverse_radio"
+msgstr "Для обратной зоны выберите переключатель выше."
+
+msgid "field.host_name"
+msgstr "имя узла"
+
+msgid "field.mail_server"
+msgstr "почтовый сервер"
+
+msgid "field.name_server"
+msgstr "сервер имён"
+
+msgid "field.port"
+msgstr "Порт"
+
+msgid "field.priority"
+msgstr "Приоритет"
+
+msgid "field.service_host"
+msgstr "узел службы"
+
+msgid "field.target_host"
+msgstr "целевой узел"
+
+msgid "field.weight"
+msgstr "Вес"
+
+msgid "label.folder_path"
+msgstr "Папка: %s"
+
+msgid "menu.about"
+msgstr "О программе"
+
+msgid "menu.action"
+msgstr "Действие"
+
+msgid "menu.connect"
+msgstr "Подключиться к серверу..."
+
+msgid "menu.delete_record"
+msgstr "Удалить запись"
+
+msgid "menu.delete_zone"
+msgstr "Удалить зону"
+
+msgid "menu.disconnect"
+msgstr "Отключиться от сервера"
+
+msgid "menu.edit_record"
+msgstr "Изменить запись..."
+
+msgid "menu.exit"
+msgstr "Выход"
+
+msgid "menu.file"
+msgstr "Файл"
+
+msgid "menu.help"
+msgstr "Справка"
+
+msgid "menu.language"
+msgstr "Язык интерфейса"
+
+msgid "menu.new_record"
+msgstr "Создать запись..."
+
+msgid "menu.new_zone"
+msgstr "Создать зону..."
+
+msgid "menu.open_folder"
+msgstr "Открыть папку"
+
+msgid "menu.refresh"
+msgstr "Обновить"
+
+msgid "msg.about"
+msgstr "Диспетчер DNS для Samba DC, версия %s\n\nАналог Microsoft DNS Manager для Linux.\nПротокол MS-DNSP (RPC) через python-биндинги Samba.\nВход по логину/паролю или билету Kerberos (GSSAPI).\n\nPython 3 + Tkinter."
+
+msgid "msg.already_connected"
+msgstr "Сервер %s уже подключён."
+
+msgid "msg.delete_record_confirm"
+msgstr "Удалить запись?\n\nИмя: %s\nТип: %s\nДанные: %s"
+
+msgid "msg.delete_zone_confirm"
+msgstr "Удалить зону «%s» на сервере %s со всеми записями?\nДействие необратимо."
+
+msgid "msg.disconnect_confirm"
+msgstr "Отключиться от сервера %s?"
+
+msgid "msg.is_folder"
+msgstr "Это папка. Откройте её двойным щелчком."
+
+msgid "msg.language_changed"
+msgstr "Язык интерфейса изменён. Изменения вступят в силу после перезапуска приложения."
+
+msgid "msg.need_server"
+msgstr "Подключитесь к серверу (кнопка «Подключиться»)."
+
+msgid "msg.ptr_failed"
+msgstr "PTR-запись не создана: %s"
+
+msgid "msg.ptr_no_zone"
+msgstr "PTR-запись не создана: нет подходящей обратной зоны для %s."
+
+msgid "msg.record_not_editable"
+msgstr "Записи типа %s не редактируются."
+
+msgid "msg.select_connected_server"
+msgstr "Выберите подключённый сервер в дереве."
+
+msgid "msg.select_record"
+msgstr "Выберите запись справа."
+
+msgid "msg.select_zone"
+msgstr "Выберите зону (не папку) в дереве."
+
+msgid "msg.select_zone_first"
+msgstr "Сначала выберите зону."
+
+msgid "rtype.a"
+msgstr "Сопоставляет имя хоста с IPv4-адресом"
+
+msgid "rtype.aaaa"
+msgstr "Сопоставляет имя хоста с IPv6-адресом"
+
+msgid "rtype.cname"
+msgstr "Псевдоним (алиас) для другого имени хоста"
+
+msgid "rtype.mx"
+msgstr "Почтовый сервер домена"
+
+msgid "rtype.ptr"
+msgstr "Обратное сопоставление: IP-адрес → имя хоста"
+
+msgid "rtype.srv"
+msgstr "Местоположение службы (хост и порт)"
+
+msgid "rtype.txt"
+msgstr "Произвольная текстовая информация (SPF и т.п.)"
+
+msgid "status.connecting"
+msgstr "Подключение к %s..."
+
+msgid "status.creating_record"
+msgstr "Создание записи..."
+
+msgid "status.creating_zone"
+msgstr "Создание зоны %s..."
+
+msgid "status.deleting_record"
+msgstr "Удаление записи..."
+
+msgid "status.deleting_zone"
+msgstr "Удаление зоны %s..."
+
+msgid "status.editing_record"
+msgstr "Изменение записи..."
+
+msgid "status.full"
+msgstr "Серверов: %d  |  Активный: %s  |  %s  |  Записей: %d, папок: %d"
+
+msgid "status.loading"
+msgstr "Загрузка..."
+
+msgid "status.loading_where"
+msgstr "Загрузка %s..."
+
+msgid "status.no_connections"
+msgstr "Нет подключений"
+
+msgid "status.refreshing"
+msgstr "Обновление..."
+
+msgid "status.servers_count"
+msgstr "Серверов подключено: %d"
+
+msgid "status.working"
+msgstr "Выполняется..."
+
+msgid "status.zone"
+msgstr "Зона: %s"
+
+msgid "status.zones"
+msgstr "Серверов: %d  |  Активный: %s  |  Зон: %d прямых, %d обратных"
+
+msgid "title.connection"
+msgstr "Подключение"
+
+msgid "title.delete_record"
+msgstr "Удаление записи"
+
+msgid "title.delete_zone"
+msgstr "Удаление зоны"
+
+msgid "title.disconnect"
+msgstr "Отключение"
+
+msgid "title.edit_record"
+msgstr "Изменение записи"
+
+msgid "title.error"
+msgstr "Ошибка"
+
+msgid "title.new_record"
+msgstr "Новая запись"
+
+msgid "title.no_connection"
+msgstr "Нет подключения"
+
+msgid "title.ptr"
+msgstr "PTR-запись"
+
+msgid "title.records"
+msgstr "Записи"
+
+msgid "title.validation"
+msgstr "Проверка данных"
+
+msgid "tree.folder_marker"
+msgstr "(папка)"
+
+msgid "tree.forward_zones"
+msgstr "Зоны прямого просмотра"
+
+msgid "tree.reverse_zones"
+msgstr "Зоны обратного просмотра"
