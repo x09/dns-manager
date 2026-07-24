@@ -20,6 +20,9 @@ _CONFIG_DIR = os.path.join(
     "dns-manager")
 _CONFIG_FILE = os.path.join(_CONFIG_DIR, "dns-manager.ini")
 
+# Зарезервированная секция общих настроек приложения (не сервер).
+_SETTINGS_SECTION = "settings"
+
 
 def _as_bool(value):
     return str(value).strip().lower() in ("1", "true", "yes", "on", "да")
@@ -36,6 +39,8 @@ def load_servers():
         # read сохраняет порядок секций
         if parser.read(_CONFIG_FILE, encoding="utf-8"):
             for name in parser.sections():
+                if name == _SETTINGS_SECTION:
+                    continue  # это общие настройки, а не сервер
                 sec = parser[name]
                 servers.append({
                     "server": name,
@@ -84,3 +89,33 @@ def remove_server(server):
     if parser.has_section(server):
         parser.remove_section(server)
         _write(parser)
+
+
+def load_language():
+    """
+    Возвращает сохранённый код языка интерфейса ('ru' или 'en') или None,
+    если язык ещё не выбран (первый запуск).
+    """
+    parser = configparser.ConfigParser()
+    try:
+        if parser.read(_CONFIG_FILE, encoding="utf-8"):
+            if parser.has_section(_SETTINGS_SECTION):
+                lang = parser[_SETTINGS_SECTION].get("language", "").strip()
+                if lang:
+                    return lang.lower()
+    except (OSError, configparser.Error):
+        pass
+    return None
+
+
+def save_language(lang):
+    """Сохраняет выбранный код языка интерфейса ('ru' или 'en')."""
+    parser = configparser.ConfigParser()
+    try:
+        parser.read(_CONFIG_FILE, encoding="utf-8")
+    except (OSError, configparser.Error):
+        pass
+    if not parser.has_section(_SETTINGS_SECTION):
+        parser.add_section(_SETTINGS_SECTION)
+    parser[_SETTINGS_SECTION]["language"] = (lang or "").lower()
+    _write(parser)

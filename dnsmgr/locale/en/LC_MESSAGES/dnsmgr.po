@@ -1,10 +1,5 @@
 msgid ""
-msgstr ""
-"Project-Id-Version: dns-manager 3.4\n"
-"Language: en\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+msgstr "Project-Id-Version: dns-manager 3.4\nLanguage: en\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
 
 msgid "app.title"
 msgstr "DNS Manager — Samba DC"
@@ -56,6 +51,15 @@ msgstr "[%d], primary server: %s, responsible: %s"
 
 msgid "data.unknown_type"
 msgstr "<data of type 0x%x>"
+
+msgid "dlg.delete.header"
+msgstr "The following records will be deleted (%d):"
+
+msgid "dlg.delete.irreversible"
+msgstr "This action cannot be undone."
+
+msgid "dlg.delete.skipped"
+msgstr "Skipped items (folders or non-editable NS/SOA records): %d"
 
 msgid "dlg.record.alias"
 msgstr "Alias:"
@@ -366,6 +370,9 @@ msgstr "DNS Manager for Samba DC, version %s\n\nA Microsoft DNS Manager analog f
 msgid "msg.already_connected"
 msgstr "Server %s is already connected."
 
+msgid "msg.delete_partial"
+msgstr "Failed to delete some records (%d):\n%s"
+
 msgid "msg.delete_record_confirm"
 msgstr "Delete record?\n\nName: %s\nType: %s\nData: %s"
 
@@ -383,6 +390,9 @@ msgstr "The interface language has been changed. The changes will take effect af
 
 msgid "msg.need_server"
 msgstr "Connect to a server (the \"Connect\" button)."
+
+msgid "msg.nothing_deletable"
+msgstr "There are no deletable records in the selection (folders and NS/SOA records cannot be deleted)."
 
 msgid "msg.ptr_failed"
 msgstr "PTR record not created: %s"

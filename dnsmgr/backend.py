@@ -45,19 +45,21 @@ TYPE_NAMES = {
 # Типы, которые пользователь может создавать/править (по ТЗ)
 EDITABLE_TYPES = ("A", "AAAA", "CNAME", "MX", "PTR", "SRV", "TXT")
 
-# Понятные сообщения для кодов ошибок Win32/WERROR
-_WERROR_MESSAGES = {
-    5: "Отказано в доступе. Проверьте права учётной записи "
-       "(нужно членство в группе Domain Admins или DnsAdmins).",
-    1326: "Неверное имя пользователя или пароль.",
-    1722: "RPC-сервер недоступен. Проверьте имя сервера и сетевое подключение.",
-    9601: "Указанная зона не существует.",
-    9609: "Зона с таким именем уже существует.",
-    9611: "Недопустимый тип зоны.",
-    9711: "Такая DNS-запись уже существует.",
-    9714: "Имя не существует в зоне.",
-    9715: "DNS-запись не найдена.",
-}
+# Понятные сообщения для кодов ошибок Win32/WERROR.
+# Функция (а не словарь-константа), чтобы перевод брался в момент вызова
+# после инициализации локали.
+def _werror_message(code):
+    return {
+        5: _("err.access_denied"),
+        1326: _("err.bad_credentials"),
+        1722: _("err.rpc_unavailable"),
+        9601: _("err.zone_absent"),
+        9609: _("err.zone_exists"),
+        9611: _("err.zone_bad_type"),
+        9711: _("err.record_exists"),
+        9714: _("err.name_absent"),
+        9715: _("err.record_absent"),
+    }.get(code)
 
 
 class DnsBackendError(Exception):
@@ -82,15 +84,15 @@ def friendly_error(exc):
         code = exc.args[0]
         if isinstance(code, int):
             # Werror может быть с установленным старшим битом (HRESULT)
-            text = _WERROR_MESSAGES.get(code & 0xFFFF)
+            text = _werror_message(code & 0xFFFF)
         if text is None and len(exc.args) > 1:
             raw = str(exc.args[1])
             if "NT_STATUS_LOGON_FAILURE" in raw:
-                text = "Неверное имя пользователя или пароль."
+                text = _("err.bad_credentials")
             elif "NT_STATUS_IO_TIMEOUT" in raw or "NT_STATUS_CONNECTION" in raw:
-                text = "Не удалось подключиться к серверу (таймаут/обрыв соединения)."
+                text = _("err.connect_timeout")
             elif "NT_STATUS_OBJECT_NAME_NOT_FOUND" in raw or "NT_STATUS_HOST_UNREACHABLE" in raw:
-                text = "Сервер не найден или недоступен."
+                text = _("err.server_unreachable")
             else:
                 text = raw
     return text or str(exc)
@@ -116,18 +118,17 @@ def reverse_zone_name(network):
             net = ipaddress.ip_network(network, strict=False)
         except ValueError:
             raise DnsBackendError(
-                "Некорректный ИД сети: %r. Примеры: 192.168.1, "
-                "10.0.0.0/16, 2001:db8::/32." % network)
+                _("err.bad_netid") % network)
         if net.version == 4:
             if net.prefixlen % 8 != 0 or net.prefixlen == 0:
                 raise DnsBackendError(
-                    "Для обратной зоны IPv4 маска должна быть /8, /16 или /24.")
+                    _("err.rev_ipv4_mask"))
             octets = str(net.network_address).split(".")[: net.prefixlen // 8]
             return ".".join(reversed(octets)) + ".in-addr.arpa"
         # IPv6
         if net.prefixlen % 4 != 0 or net.prefixlen == 0:
             raise DnsBackendError(
-                "Для обратной зоны IPv6 длина префикса должна быть кратна 4.")
+                _("err.rev_ipv6_prefix"))
         nibbles = net.network_address.exploded.replace(":", "")
         count = net.prefixlen // 4
         return ".".join(reversed(nibbles[:count])) + ".ip6.arpa"
@@ -137,8 +138,7 @@ def reverse_zone_name(network):
     if not 1 <= len(parts) <= 3 or not all(
             p.isdigit() and 0 <= int(p) <= 255 for p in parts):
         raise DnsBackendError(
-            "Укажите ИД сети в виде «192.168.1», «10.0.0.0/16» или готовое имя "
-            "зоны «1.168.192.in-addr.arpa».")
+            _("err.netid_form"))
     return ".".join(reversed(parts)) + ".in-addr.arpa"
 
 
@@ -162,7 +162,7 @@ def ptr_relative_name(ip_text, zone_name):
     if rev.lower().endswith(suffix):
         return rev[: -len(suffix)]
     raise DnsBackendError(
-        "IP-адрес %s не принадлежит зоне %s." % (ip_text, zone_name))
+        _("err.ip_not_in_zone") % (ip_text, zone_name))
 
 
 def validate_name(name):
@@ -170,7 +170,7 @@ def validate_name(name):
     if name in ("@", ""):
         return "@"
     if not re.fullmatch(r"[A-Za-z0-9а-яА-ЯёЁ_\-.]{1,255}", name):
-        raise DnsBackendError("Недопустимое имя записи: %r" % name)
+        raise DnsBackendError(_("err.bad_record_name") % name)
     return name
 
 
@@ -208,7 +208,7 @@ def full_record_name(node_path, name):
 def _validate_fqdn(value, what):
     value = value.strip().rstrip(".")
     if not value or not re.fullmatch(r"[A-Za-z0-9а-яА-ЯёЁ_\-.]{1,255}", value):
-        raise DnsBackendError("Укажите корректное FQDN: %s." % what)
+        raise DnsBackendError(_("err.bad_fqdn") % what)
     return value
 
 
@@ -216,9 +216,9 @@ def _validate_int(value, what, lo=0, hi=65535):
     try:
         n = int(str(value).strip())
     except (TypeError, ValueError):
-        raise DnsBackendError("Поле «%s» должно быть числом." % what)
+        raise DnsBackendError(_("err.field_not_number") % what)
     if not lo <= n <= hi:
-        raise DnsBackendError("Поле «%s»: значение от %d до %d." % (what, lo, hi))
+        raise DnsBackendError(_("err.field_range") % (what, lo, hi))
     return n
 
 
@@ -228,36 +228,36 @@ def build_record(rtype, fields, ttl):
 
     fields — словарь, состав зависит от типа (см. dialogs.py).
     """
-    ttl = _validate_int(ttl, "TTL", 0, 2 ** 31 - 1)
+    ttl = _validate_int(ttl, _("common.ttl"), 0, 2 ** 31 - 1)
     if rtype == "A":
         try:
             ip = str(ipaddress.IPv4Address(fields["ip"].strip()))
         except ValueError:
-            raise DnsBackendError("Некорректный IPv4-адрес.")
+            raise DnsBackendError(_("err.bad_ipv4"))
         return ARecord(ip, ttl=ttl)
     if rtype == "AAAA":
         try:
             ip = str(ipaddress.IPv6Address(fields["ip"].strip()))
         except ValueError:
-            raise DnsBackendError("Некорректный IPv6-адрес.")
+            raise DnsBackendError(_("err.bad_ipv6"))
         return AAAARecord(ip, ttl=ttl)
     if rtype == "CNAME":
         return CNAMERecord(
-            _validate_fqdn(fields["target"], "целевой узел"), ttl=ttl)
+            _validate_fqdn(fields["target"], _("field.target_host")), ttl=ttl)
     if rtype == "MX":
         return MXRecord(
-            _validate_fqdn(fields["exchange"], "почтовый сервер"),
-            _validate_int(fields["preference"], "Приоритет"), ttl=ttl)
+            _validate_fqdn(fields["exchange"], _("field.mail_server")),
+            _validate_int(fields["preference"], _("field.priority")), ttl=ttl)
     if rtype == "PTR":
-        return PTRRecord(_validate_fqdn(fields["host"], "имя узла"), ttl=ttl)
+        return PTRRecord(_validate_fqdn(fields["host"], _("field.host_name")), ttl=ttl)
     if rtype == "NS":
-        return NSRecord(_validate_fqdn(fields["host"], "сервер имён"), ttl=ttl)
+        return NSRecord(_validate_fqdn(fields["host"], _("field.name_server")), ttl=ttl)
     if rtype == "SRV":
         return SRVRecord(
-            _validate_fqdn(fields["target"], "узел службы"),
-            _validate_int(fields["port"], "Порт", 1, 65535),
-            priority=_validate_int(fields["priority"], "Приоритет"),
-            weight=_validate_int(fields["weight"], "Вес"),
+            _validate_fqdn(fields["target"], _("field.service_host")),
+            _validate_int(fields["port"], _("field.port"), 1, 65535),
+            priority=_validate_int(fields["priority"], _("field.priority")),
+            weight=_validate_int(fields["weight"], _("field.weight")),
             ttl=ttl)
     if rtype == "TXT":
         text = fields["text"]
@@ -266,9 +266,9 @@ def build_record(rtype, fields, ttl):
         else:
             parts = [text]
         if not any(parts):
-            raise DnsBackendError("Текст TXT-записи не может быть пустым.")
+            raise DnsBackendError(_("err.txt_empty"))
         return TXTRecord(parts, ttl=ttl)
-    raise DnsBackendError("Тип записи %s не поддерживается." % rtype)
+    raise DnsBackendError(_("err.rtype_unsupported") % rtype)
 
 
 def record_display_data(rec):
@@ -286,10 +286,10 @@ def record_display_data(rec):
     if t == dnsp.DNS_TYPE_TXT:
         return " ".join('"%s"' % s.str for s in d.str)
     if t == dnsp.DNS_TYPE_SOA:
-        return ("[%d], основной сервер: %s, ответственный: %s" %
+        return (_("data.soa") %
                 (d.dwSerialNo, d.NamePrimaryServer.str,
                  d.ZoneAdministratorEmail.str))
-    return "<данные типа 0x%x>" % t
+    return _("data.unknown_type") % t
 
 
 def record_fields(rec):
@@ -338,7 +338,7 @@ class DnsBackend:
         """
         server = server.strip()
         if not server:
-            raise DnsBackendError("Не указано имя сервера.")
+            raise DnsBackendError(_("err.server_name_missing"))
         lp = param.LoadParm()
         try:
             lp.load_default()
@@ -378,9 +378,7 @@ class DnsBackend:
             target_hostname = self._target_hostname(server, realm)
             if not target_hostname:
                 raise DnsBackendError(
-                    "Для входа по Kerberos не удалось определить имя (FQDN) "
-                    "контроллера домена по адресу %s. Укажите сервер по имени "
-                    "(например dc.test.alt) или настройте обратную зону DNS." %
+                    _("err.krb_no_fqdn") %
                     server)
 
             # 3) Явно привязываем существующий кэш билетов, чтобы принципал
@@ -452,16 +450,8 @@ class DnsBackend:
                 if kerberos.ccache_is_keyring():
                     cc = kerberos.get_ccache_name() or "KEYRING"
                     return (
-                        "Не удалось войти по Kerberos: билет хранится в кэше "
-                        "типа «%s», а клиентские библиотеки Samba не умеют "
-                        "с ним работать.\n\n"
-                        "Переключите кэш билетов на файловый. В "
-                        "/etc/krb5.conf, секция [libdefaults]:\n"
-                        "    default_ccache_name = FILE:/tmp/krb5cc_%%{uid}\n"
-                        "затем заново выполните kinit.\n\n"
-                        "Либо разово перед запуском:\n"
-                        "    KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u) kinit %s" %
-                        (cc, "<пользователь>"))
+                        _("err.krb_keyring") %
+                        (cc, _("common.user_placeholder")))
             except Exception:
                 pass
         return msg
@@ -550,7 +540,7 @@ class DnsBackend:
 
     def _check(self):
         if not self.connected:
-            raise DnsBackendError("Нет подключения к серверу.")
+            raise DnsBackendError(_("err.not_connected"))
 
     # ------------------------------------------------------------------
     # Зоны
@@ -580,7 +570,7 @@ class DnsBackend:
         zone_name = zone_name.strip().rstrip(".").lower()
         if not zone_name or not re.fullmatch(
                 r"[A-Za-z0-9а-яА-ЯёЁ_\-.]{1,255}", zone_name):
-            raise DnsBackendError("Недопустимое имя зоны: %r" % zone_name)
+            raise DnsBackendError(_("err.bad_zone_name") % zone_name)
         info = dnsserver.DNS_RPC_ZONE_CREATE_INFO_LONGHORN()
         info.pszZoneName = zone_name
         info.dwZoneType = dnsp.DNS_ZONE_TYPE_PRIMARY

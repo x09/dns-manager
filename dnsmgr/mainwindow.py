@@ -20,12 +20,17 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import messagebox, ttk
 
-from . import backend, config, icons
+from . import backend, config, i18n, icons
 from .backend import DnsBackend, friendly_error
-from .dialogs import RecordDialog, ServerChooserDialog, ZoneDialog
+from .dialogs import (
+    DeleteConfirmDialog, RecordDialog, ServerChooserDialog, ZoneDialog)
 
-APP_TITLE = "Диспетчер DNS — Samba DC"
-PARENT_LABEL = "(совпадает с родительской папкой)"
+def APP_TITLE():
+    return _("app.title")
+
+
+def PARENT_LABEL():
+    return _("common.parent_label")
 
 
 class ServerState:
@@ -51,7 +56,7 @@ class MainWindow:
         self._busy = False
         self._sort_state = {}
 
-        root.title(APP_TITLE)
+        root.title(APP_TITLE())
         root.geometry("1040x660")
         root.minsize(780, 460)
 
@@ -77,32 +82,52 @@ class MainWindow:
     def _build_menu(self):
         menubar = tk.Menu(self.root)
         m_file = tk.Menu(menubar, tearoff=0)
-        m_file.add_command(label="Подключиться к серверу...",
+        m_file.add_command(label=_("menu.connect"),
                            command=self.action_connect)
-        m_file.add_command(label="Отключиться от сервера",
+        m_file.add_command(label=_("menu.disconnect"),
                            command=self.action_disconnect)
         m_file.add_separator()
-        m_file.add_command(label="Выход", command=self.root.destroy)
-        menubar.add_cascade(label="Файл", menu=m_file)
+        m_file.add_command(label=_("menu.exit"), command=self.root.destroy)
+        menubar.add_cascade(label=_("menu.file"), menu=m_file)
 
         m_action = tk.Menu(menubar, tearoff=0)
-        m_action.add_command(label="Обновить", accelerator="F5",
+        m_action.add_command(label=_("menu.refresh"), accelerator="F5",
                              command=self.action_refresh)
         m_action.add_separator()
-        m_action.add_command(label="Создать зону...", command=self.action_new_zone)
-        m_action.add_command(label="Удалить зону", command=self.action_delete_zone)
+        m_action.add_command(label=_("menu.new_zone"), command=self.action_new_zone)
+        m_action.add_command(label=_("menu.delete_zone"), command=self.action_delete_zone)
         m_action.add_separator()
-        m_action.add_command(label="Создать запись...", command=self.action_new_record)
-        m_action.add_command(label="Изменить запись...", command=self.action_edit_record)
-        m_action.add_command(label="Удалить запись", command=self.action_delete_record)
-        menubar.add_cascade(label="Действие", menu=m_action)
+        m_action.add_command(label=_("menu.new_record"), command=self.action_new_record)
+        m_action.add_command(label=_("menu.edit_record"), command=self.action_edit_record)
+        m_action.add_command(label=_("menu.delete_record"), command=self.action_delete_record)
+        menubar.add_cascade(label=_("menu.action"), menu=m_action)
 
         m_help = tk.Menu(menubar, tearoff=0)
-        m_help.add_command(label="О программе", command=self._about)
-        menubar.add_cascade(label="Справка", menu=m_help)
+        # Подменю выбора языка интерфейса
+        m_lang = tk.Menu(m_help, tearoff=0)
+        self._lang_var = tk.StringVar(value=i18n.current_language())
+        for code, name in i18n.available_languages():
+            m_lang.add_radiobutton(
+                label=name, value=code, variable=self._lang_var,
+                command=lambda c=code: self._on_language_selected(c))
+        m_help.add_cascade(label=_("menu.language"), menu=m_lang)
+        m_help.add_separator()
+        m_help.add_command(label=_("menu.about"), command=self._about)
+        menubar.add_cascade(label=_("menu.help"), menu=m_help)
         self.root.config(menu=menubar)
         self.root.bind("<F5>", lambda e: self.action_refresh())
         self.root.bind("<Delete>", lambda e: self._on_delete_key())
+
+    def _on_language_selected(self, code):
+        """Сохраняет выбранный язык и предлагает перезапуск."""
+        if code == i18n.current_language():
+            return
+        config.save_language(code)
+        i18n.set_language(code)
+        messagebox.showinfo(
+            _("menu.language"),
+            _("msg.language_changed"),
+            parent=self.root)
 
     def _tbutton(self, bar, name, text, cmd):
         img = self.icon.get(name)
@@ -115,13 +140,13 @@ class MainWindow:
     def _build_toolbar(self):
         bar = ttk.Frame(self.root, padding=(6, 4))
         bar.pack(side="top", fill="x")
-        self.btn_connect = self._tbutton(bar, "connect", " Подключиться", self.action_connect)
-        self.btn_refresh = self._tbutton(bar, "refresh", " Обновить", self.action_refresh)
-        self.btn_new_zone = self._tbutton(bar, "newzone", " Создать зону", self.action_new_zone)
-        self.btn_del_zone = self._tbutton(bar, "delzone", " Удалить зону", self.action_delete_zone)
-        self.btn_new_rec = self._tbutton(bar, "newrec", " Создать запись", self.action_new_record)
-        self.btn_edit_rec = self._tbutton(bar, "editrec", " Изменить запись", self.action_edit_record)
-        self.btn_del_rec = self._tbutton(bar, "delrec", " Удалить запись", self.action_delete_record)
+        self.btn_connect = self._tbutton(bar, "connect", " " + _("btn.connect"), self.action_connect)
+        self.btn_refresh = self._tbutton(bar, "refresh", " " + _("menu.refresh"), self.action_refresh)
+        self.btn_new_zone = self._tbutton(bar, "newzone", " " + _("btn.new_zone"), self.action_new_zone)
+        self.btn_del_zone = self._tbutton(bar, "delzone", " " + _("menu.delete_zone"), self.action_delete_zone)
+        self.btn_new_rec = self._tbutton(bar, "newrec", " " + _("btn.new_record"), self.action_new_record)
+        self.btn_edit_rec = self._tbutton(bar, "editrec", " " + _("btn.edit_record"), self.action_edit_record)
+        self.btn_del_rec = self._tbutton(bar, "delrec", " " + _("menu.delete_record"), self.action_delete_record)
         for i, b in enumerate((self.btn_connect, self.btn_refresh, self.btn_new_zone,
                                self.btn_del_zone, self.btn_new_rec,
                                self.btn_edit_rec, self.btn_del_rec)):
@@ -151,12 +176,12 @@ class MainWindow:
         # Колонка #0 («дерево») показывает пиктограмму и имя записи
         cols = ("type", "data", "ttl")
         self.records = ttk.Treeview(right, columns=cols, show="tree headings",
-                                    selectmode="browse")
-        self.records.heading("#0", text="Имя",
+                                    selectmode="extended")
+        self.records.heading("#0", text=_("col.name"),
                              command=lambda: self._sort_records("name"))
-        self.records.heading("type", text="Тип", command=lambda: self._sort_records("type_name"))
-        self.records.heading("data", text="Данные", command=lambda: self._sort_records("data"))
-        self.records.heading("ttl", text="TTL", command=lambda: self._sort_records("ttl"))
+        self.records.heading("type", text=_("col.type"), command=lambda: self._sort_records("type_name"))
+        self.records.heading("data", text=_("col.data"), command=lambda: self._sort_records("data"))
+        self.records.heading("ttl", text=_("common.ttl"), command=lambda: self._sort_records("ttl"))
         self.records.column("#0", width=260, anchor="w")
         self.records.column("type", width=70, anchor="w", stretch=False)
         self.records.column("data", width=430, anchor="w")
@@ -171,7 +196,7 @@ class MainWindow:
         self.records.bind("<<TreeviewSelect>>", lambda e: self._update_actions())
 
     def _build_statusbar(self):
-        self.status_var = tk.StringVar(value="Нет подключений")
+        self.status_var = tk.StringVar(value=_("status.no_connections"))
         bar = ttk.Frame(self.root)
         bar.pack(side="bottom", fill="x")
         ttk.Separator(bar).pack(fill="x")
@@ -212,7 +237,9 @@ class MainWindow:
     # ==================================================================
     # Асинхронность
     # ==================================================================
-    def run_async(self, work, on_done=None, status="Выполняется..."):
+    def run_async(self, work, on_done=None, status=None):
+        if status is None:
+            status = _("status.working")
         if self._busy:
             return False
         self._set_busy(True, status)
@@ -235,7 +262,7 @@ class MainWindow:
             return
         self._set_busy(False)
         if error is not None:
-            messagebox.showerror("Ошибка", friendly_error(error), parent=self.root)
+            messagebox.showerror(_("title.error"), friendly_error(error), parent=self.root)
             self._update_status()
         elif on_done:
             on_done(result)
@@ -265,8 +292,8 @@ class MainWindow:
     def _do_connect(self, spec):
         addr = spec["server"]
         if addr in self.servers:
-            messagebox.showinfo("Подключение",
-                                "Сервер %s уже подключён." % addr, parent=self.root)
+            messagebox.showinfo(_("title.connection"),
+                                _("msg.already_connected") % addr, parent=self.root)
             self._select_server(addr)
             return
         be = DnsBackend()
@@ -287,20 +314,20 @@ class MainWindow:
             self._select_server(addr)
             self._update_status()
 
-        self.run_async(work, done, "Подключение к %s..." % addr)
+        self.run_async(work, done, _("status.connecting") % addr)
 
     def _add_server_node(self, addr):
         iid = "srv|" + addr
         st = self.servers[addr]
-        label = "%s  (%s)" % (addr, "Kerberos" if st.kerberos else st.username)
+        label = "%s  (%s)" % (addr, _("common.kerberos") if st.kerberos else st.username)
         if self.tree.exists(iid):
             self.tree.delete(iid)
         self.tree.insert("", "end", iid=iid, text=label, open=True,
                          tags=("server",))
         self.tree.insert(iid, "end", iid="fwd|" + addr,
-                         text="Зоны прямого просмотра", open=True)
+                         text=_("tree.forward_zones"), open=True)
         self.tree.insert(iid, "end", iid="rev|" + addr,
-                         text="Зоны обратного просмотра", open=True)
+                         text=_("tree.reverse_zones"), open=True)
         for z in st.forward:
             ziid = self._zone_iid(addr, z)
             self.tree.insert("fwd|" + addr, "end", iid=ziid, text=z)
@@ -319,12 +346,12 @@ class MainWindow:
     def action_disconnect(self):
         addr = self.active
         if not addr or addr not in self.servers:
-            messagebox.showinfo("Отключение",
-                                "Выберите подключённый сервер в дереве.",
+            messagebox.showinfo(_("title.disconnect"),
+                                _("msg.select_connected_server"),
                                 parent=self.root)
             return
         if not messagebox.askyesno(
-                "Отключение", "Отключиться от сервера %s?" % addr,
+                _("title.disconnect"), _("msg.disconnect_confirm") % addr,
                 parent=self.root):
             return
         self.servers[addr].backend.disconnect()
@@ -365,7 +392,7 @@ class MainWindow:
                 self._apply_node(addr, zone, "", node)
             self._update_status()
 
-        self.run_async(work, done, "Обновление...")
+        self.run_async(work, done, _("status.refreshing"))
 
     def _refresh_zone_nodes(self, addr):
         st = self.servers[addr]
@@ -416,22 +443,21 @@ class MainWindow:
                 self.tree.see(ziid)
             self._update_status()
 
-        self.run_async(work, done, "Создание зоны %s..." % zone)
+        self.run_async(work, done, _("status.creating_zone") % zone)
 
     def action_delete_zone(self):
         st = self._active_state()
         sel = self.tree.selection()
         info = self._parse_iid(sel[0]) if sel else None
         if st is None or not info or info["kind"] != "zone":
-            messagebox.showinfo("Удаление зоны",
-                                "Выберите зону (не папку) в дереве.",
+            messagebox.showinfo(_("title.delete_zone"),
+                                _("msg.select_zone"),
                                 parent=self.root)
             return
         zone = info["zone"]; addr = self.active; be = st.backend
         if not messagebox.askyesno(
-                "Удаление зоны",
-                "Удалить зону «%s» на сервере %s со всеми записями?\n"
-                "Действие необратимо." % (zone, addr),
+                _("title.delete_zone"),
+                _("msg.delete_zone_confirm") % (zone, addr),
                 icon="warning", parent=self.root):
             return
 
@@ -449,7 +475,7 @@ class MainWindow:
             self._select_server(addr)
             self._update_status()
 
-        self.run_async(work, done, "Удаление зоны %s..." % zone)
+        self.run_async(work, done, _("status.deleting_zone") % zone)
 
     # ==================================================================
     # Узлы (папки) и записи
@@ -465,7 +491,7 @@ class MainWindow:
             if st and (st.zone, st.path) == (zone, path):
                 self._apply_node(addr, zone, path, node)
         where = "%s/%s" % (zone, path) if path else zone
-        self.run_async(work, done, "Загрузка %s..." % where)
+        self.run_async(work, done, _("status.loading_where") % where)
 
     def _apply_node(self, addr, zone, path, node):
         st = self.servers.get(addr)
@@ -490,9 +516,9 @@ class MainWindow:
             self.records.insert("", "end", iid="folder|" + f["path"],
                                 text=" " + f["name"],
                                 image=self.icon.get("folder16") or "",
-                                values=("", "(папка)", ""))
+                                values=("", _("tree.folder_marker"), ""))
         for idx, r in enumerate(st.records):
-            name = PARENT_LABEL if r["name"] == "@" else r["name"]
+            name = PARENT_LABEL() if r["name"] == "@" else r["name"]
             editable = r["type_name"] in backend.EDITABLE_TYPES
             img = self.icon.get("rec16" if editable else "lock16") or ""
             self.records.insert("", "end", iid=str(idx),
@@ -532,7 +558,7 @@ class MainWindow:
             self._need_server()
             return
         if not st.zone:
-            messagebox.showinfo("Новая запись", "Сначала выберите зону.",
+            messagebox.showinfo(_("title.new_record"), _("msg.select_zone_first"),
                                 parent=self.root)
             return
         addr, zone, path, be = self.active, st.zone, st.path, st.backend
@@ -551,10 +577,9 @@ class MainWindow:
                     created = be.add_ptr_for_a(res["fields"]["ip"], host_fqdn,
                                                st.reverse, res["ttl"])
                     if created is None:
-                        warn = ("PTR-запись не создана: нет подходящей "
-                                "обратной зоны для %s." % res["fields"]["ip"])
+                        warn = (_("msg.ptr_no_zone") % res["fields"]["ip"])
                 except Exception as e:  # noqa: BLE001
-                    warn = "PTR-запись не создана: %s" % friendly_error(e)
+                    warn = _("msg.ptr_failed") % friendly_error(e)
             return be.get_node(zone, path), warn
 
         def done(result):
@@ -563,9 +588,9 @@ class MainWindow:
             if cur and (cur.zone, cur.path) == (zone, path):
                 self._apply_node(addr, zone, path, node)
             if warn:
-                messagebox.showwarning("PTR-запись", warn, parent=self.root)
+                messagebox.showwarning(_("title.ptr"), warn, parent=self.root)
 
-        self.run_async(work, done, "Создание записи...")
+        self.run_async(work, done, _("status.creating_record"))
 
     def action_edit_record(self):
         st = self._active_state()
@@ -573,8 +598,8 @@ class MainWindow:
         if st is None or rec is None:
             return
         if rec["type_name"] not in backend.EDITABLE_TYPES:
-            messagebox.showinfo("Изменение записи",
-                                "Записи типа %s не редактируются." % rec["type_name"],
+            messagebox.showinfo(_("title.edit_record"),
+                                _("msg.record_not_editable") % rec["type_name"],
                                 parent=self.root)
             return
         addr, zone, path, be = self.active, st.zone, st.path, st.backend
@@ -593,32 +618,82 @@ class MainWindow:
             if cur and (cur.zone, cur.path) == (zone, path):
                 self._apply_node(addr, zone, path, node)
 
-        self.run_async(work, done, "Изменение записи...")
+        self.run_async(work, done, _("status.editing_record"))
+
+    def _selected_records(self):
+        """
+        Все выбранные в правой панели записи, годные к удалению.
+
+        Возвращает (records, skipped): records — список записей обычных типов
+        (папки и нередактируемые NS/SOA отфильтрованы); skipped — сколько
+        элементов выбора отброшено.
+        """
+        st = self._active_state()
+        if st is None:
+            return [], 0
+        records, skipped = [], 0
+        for iid in self.records.selection():
+            if iid.startswith("folder|"):
+                skipped += 1
+                continue
+            try:
+                rec = st.records[int(iid)]
+            except (ValueError, IndexError, AttributeError):
+                skipped += 1
+                continue
+            if rec["type_name"] not in backend.EDITABLE_TYPES:
+                skipped += 1  # NS/SOA и прочие нередактируемые
+                continue
+            records.append(rec)
+        return records, skipped
 
     def action_delete_record(self):
         st = self._active_state()
-        rec = self._selected_record()
-        if st is None or rec is None:
+        if st is None:
+            return
+        recs, skipped = self._selected_records()
+        if not recs:
+            if skipped:
+                messagebox.showinfo(_("title.delete_record"),
+                                    _("msg.nothing_deletable"),
+                                    parent=self.root)
+            else:
+                messagebox.showinfo(_("title.records"),
+                                    _("msg.select_record"), parent=self.root)
             return
         addr, zone, path, be = self.active, st.zone, st.path, st.backend
-        shown = PARENT_LABEL if rec["name"] == "@" else rec["name"]
-        if not messagebox.askyesno(
-                "Удаление записи",
-                "Удалить запись?\n\nИмя: %s\nТип: %s\nДанные: %s" %
-                (shown, rec["type_name"], rec["data"]),
-                icon="warning", parent=self.root):
+
+        # Список для показа (с подстановкой «родительской папки» вместо '@').
+        shown = [{"name": PARENT_LABEL() if r["name"] == "@" else r["name"],
+                  "type_name": r["type_name"], "data": r["data"]}
+                 for r in recs]
+        dlg = DeleteConfirmDialog(self.root, shown, skipped=skipped)
+        if not dlg.result:
             return
 
-        def work():
-            be.delete_record(zone, rec["full_name"], rec["raw"])
-            return be.get_node(zone, path)
+        targets = [(r["full_name"], r["raw"]) for r in recs]
 
-        def done(node):
+        def work():
+            errors = []
+            for full_name, raw in targets:
+                try:
+                    be.delete_record(zone, full_name, raw)
+                except Exception as e:  # noqa: BLE001
+                    errors.append(friendly_error(e))
+            return be.get_node(zone, path), errors
+
+        def done(result):
+            node, errors = result
             cur = self.servers.get(addr)
             if cur and (cur.zone, cur.path) == (zone, path):
                 self._apply_node(addr, zone, path, node)
+            if errors:
+                messagebox.showwarning(
+                    _("title.delete_record"),
+                    _("msg.delete_partial") % (len(errors), "\n".join(errors)),
+                    parent=self.root)
 
-        self.run_async(work, done, "Удаление записи...")
+        self.run_async(work, done, _("status.deleting_record"))
 
     # ==================================================================
     # Выбор в дереве
@@ -661,17 +736,17 @@ class MainWindow:
 
             def done(data):
                 self._update_tree_children(addr, zone, path, data["folders"])
-            self.run_async(work, done, "Загрузка...")
+            self.run_async(work, done, _("status.loading"))
 
     def _selected_record(self):
         st = self._active_state()
         sel = self.records.selection()
         if not sel:
-            messagebox.showinfo("Записи", "Выберите запись справа.", parent=self.root)
+            messagebox.showinfo(_("title.records"), _("msg.select_record"), parent=self.root)
             return None
         iid = sel[0]
         if iid.startswith("folder|"):
-            messagebox.showinfo("Записи", "Это папка. Откройте её двойным щелчком.",
+            messagebox.showinfo(_("title.records"), _("msg.is_folder"),
                                 parent=self.root)
             return None
         try:
@@ -701,7 +776,8 @@ class MainWindow:
     def _on_delete_key(self):
         foc = self.root.focus_get()
         if foc == self.records and self.records.selection():
-            if not self.records.selection()[0].startswith("folder|"):
+            # Удаляем, если в выборе есть хотя бы одна удаляемая запись.
+            if any(self._is_deletable_iid(i) for i in self.records.selection()):
                 self.action_delete_record()
         elif foc == self.tree:
             sel = self.tree.selection()
@@ -715,43 +791,51 @@ class MainWindow:
             self.tree.selection_set(iid)
         info = self._parse_iid(iid) if iid else None
         menu = tk.Menu(self.root, tearoff=0)
-        menu.add_command(label="Подключиться к серверу...", command=self.action_connect)
+        menu.add_command(label=_("menu.connect"), command=self.action_connect)
         if info and info["kind"] == "server":
-            menu.add_command(label="Отключиться от сервера",
+            menu.add_command(label=_("menu.disconnect"),
                              command=self.action_disconnect)
         if info and info["server"] in self.servers:
             menu.add_separator()
-            menu.add_command(label="Создать зону...", command=self.action_new_zone)
+            menu.add_command(label=_("menu.new_zone"), command=self.action_new_zone)
             if info["kind"] == "zone":
-                menu.add_command(label="Удалить зону", command=self.action_delete_zone)
+                menu.add_command(label=_("menu.delete_zone"), command=self.action_delete_zone)
             if info["kind"] in ("zone", "node"):
-                menu.add_command(label="Создать запись...", command=self.action_new_record)
+                menu.add_command(label=_("menu.new_record"), command=self.action_new_record)
         menu.add_separator()
-        menu.add_command(label="Обновить", command=self.action_refresh)
+        menu.add_command(label=_("menu.refresh"), command=self.action_refresh)
         menu.tk_popup(event.x_root, event.y_root)
 
     def _records_context_menu(self, event):
         iid = self.records.identify_row(event.y)
-        if iid:
+        # Не сбрасываем множественный выбор: меняем его только если клик был
+        # по строке вне текущего выбора.
+        if iid and iid not in self.records.selection():
             self.records.selection_set(iid)
+        sel = self.records.selection()
         menu = tk.Menu(self.root, tearoff=0)
-        menu.add_command(label="Создать запись...", command=self.action_new_record)
-        if iid and iid.startswith("folder|"):
-            menu.add_command(label="Открыть папку",
+        menu.add_command(label=_("menu.new_record"), command=self.action_new_record)
+        if iid and iid.startswith("folder|") and len(sel) <= 1:
+            menu.add_command(label=_("menu.open_folder"),
                              command=lambda p=iid.split("|", 1)[1]: self._open_folder(p))
-        elif iid:
-            menu.add_command(label="Изменить запись...", command=self.action_edit_record)
-            menu.add_command(label="Удалить запись", command=self.action_delete_record)
+        else:
+            rec_items = [i for i in sel if not i.startswith("folder|")]
+            if len(rec_items) == 1 and self._is_deletable_iid(rec_items[0]):
+                menu.add_command(label=_("menu.edit_record"),
+                                 command=self.action_edit_record)
+            if any(self._is_deletable_iid(i) for i in rec_items):
+                menu.add_command(label=_("menu.delete_record"),
+                                 command=self.action_delete_record)
         menu.add_separator()
-        menu.add_command(label="Обновить", command=self.action_refresh)
+        menu.add_command(label=_("menu.refresh"), command=self.action_refresh)
         menu.tk_popup(event.x_root, event.y_root)
 
     # ==================================================================
     # Служебное
     # ==================================================================
     def _need_server(self):
-        messagebox.showinfo("Нет подключения",
-                            "Подключитесь к серверу (кнопка «Подключиться»).",
+        messagebox.showinfo(_("title.no_connection"),
+                            _("msg.need_server"),
                             parent=self.root)
 
     def _update_actions(self):
@@ -763,48 +847,62 @@ class MainWindow:
         zone_sel = has_server and info is not None and info["kind"] == "zone"
         node_sel = has_server and info is not None and info["kind"] in ("zone", "node")
         server_sel = has_server and info is not None and info["kind"] == "server"
-        rec_sel = sel_rec = self.records.selection()
-        rec_ok = node_sel and bool(rec_sel) and not rec_sel[0].startswith("folder|")
+        rec_sel = self.records.selection()
+        # Записи в выборе (без папок).
+        rec_items = [i for i in rec_sel if not i.startswith("folder|")]
+        # Удаление доступно, если выбрана хотя бы одна удаляемая запись
+        # (обычного типа). Правка — только когда выбрана ровно одна.
+        deletable = node_sel and any(
+            self._is_deletable_iid(i) for i in rec_items)
+        edit_ok = node_sel and len(rec_items) == 1 and \
+            self._is_deletable_iid(rec_items[0])
         s = lambda ok: "normal" if ok else "disabled"  # noqa: E731
         self.btn_connect.config(state=s(not busy))
         self.btn_refresh.config(state=s(has_server))
         self.btn_new_zone.config(state=s(has_server))
         self.btn_del_zone.config(state=s(zone_sel))
         self.btn_new_rec.config(state=s(node_sel))
-        self.btn_edit_rec.config(state=s(rec_ok))
-        self.btn_del_rec.config(state=s(rec_ok))
+        self.btn_edit_rec.config(state=s(edit_ok))
+        self.btn_del_rec.config(state=s(deletable))
+
+    def _is_deletable_iid(self, iid):
+        """True, если iid соответствует удаляемой записи (не папке, тип EDITABLE)."""
+        if not iid or iid.startswith("folder|"):
+            return False
+        st = self._active_state()
+        try:
+            rec = st.records[int(iid)]
+        except (ValueError, IndexError, AttributeError):
+            return False
+        return rec["type_name"] in backend.EDITABLE_TYPES
 
     def _update_status(self):
         n = len(self.servers)
         if n == 0:
-            self.status_var.set("Нет подключений")
+            self.status_var.set(_("status.no_connections"))
             self._update_actions()
             return
         st = self._active_state()
         if st and st.zone:
-            where = "Зона: %s" % st.zone
+            where = _("status.zone") % st.zone
             if st.path:
-                where += "  |  Папка: %s" % st.path
+                where += "  |  " + _("label.folder_path") % st.path
             self.status_var.set(
-                "Серверов: %d  |  Активный: %s  |  %s  |  Записей: %d, папок: %d" %
+                _("status.full") %
                 (n, self.active, where, len(st.records), len(st.folders)))
         elif st:
             self.status_var.set(
-                "Серверов: %d  |  Активный: %s  |  Зон: %d прямых, %d обратных" %
+                _("status.zones") %
                 (n, self.active, len(st.forward), len(st.reverse)))
         else:
-            self.status_var.set("Серверов подключено: %d" % n)
+            self.status_var.set(_("status.servers_count") % n)
         self._update_actions()
 
     def _about(self):
         from . import __version__
         messagebox.showinfo(
-            "О программе",
-            "Диспетчер DNS для Samba DC, версия %s\n\n"
-            "Аналог Microsoft DNS Manager для Linux.\n"
-            "Протокол MS-DNSP (RPC) через python-биндинги Samba.\n"
-            "Вход по логину/паролю или билету Kerberos (GSSAPI).\n\n"
-            "Python 3 + Tkinter." % __version__, parent=self.root)
+            _("menu.about"),
+            _("msg.about") % __version__, parent=self.root)
 
 
 def main():

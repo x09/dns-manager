@@ -4,7 +4,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from . import backend, kerberos
+from . import backend, kerberos  # noqa: F401  (kerberos используется ниже)
 
 PAD = dict(padx=8, pady=4)
 
@@ -21,10 +21,10 @@ class ModalDialog(tk.Toplevel):
         self.body.grid(row=0, column=0, sticky="nsew")
         btns = ttk.Frame(self, padding=(10, 0, 10, 10))
         btns.grid(row=1, column=0, sticky="e")
-        self.ok_btn = ttk.Button(btns, text="ОК", width=12,
+        self.ok_btn = ttk.Button(btns, text=_("btn.ok"), width=12,
                                  command=self._on_ok, default="active")
         self.ok_btn.grid(row=0, column=0, padx=(0, 6))
-        ttk.Button(btns, text="Отмена", width=12,
+        ttk.Button(btns, text=_("btn.cancel"), width=12,
                    command=self._on_cancel).grid(row=0, column=1)
         self.bind("<Return>", lambda e: self._on_ok())
         self.bind("<Escape>", lambda e: self._on_cancel())
@@ -50,7 +50,7 @@ class ModalDialog(tk.Toplevel):
             self.result = self.validate()
         except backend.DnsBackendError as e:
             from tkinter import messagebox
-            messagebox.showwarning("Проверка данных", str(e), parent=self)
+            messagebox.showwarning(_("title.validation"), str(e), parent=self)
             return
         self.destroy()
 
@@ -73,13 +73,13 @@ class ServerChooserDialog(ModalDialog):
         self._preselect = preselect
         self._krb_ticket = kerberos.has_ticket()
         self._krb_principal = kerberos.get_principal() if self._krb_ticket else None
-        super().__init__(parent, "Подключение к серверу DNS")
+        super().__init__(parent, _("dlg.server.title"))
 
     # ---- построение --------------------------------------------------------
     def build_body(self, master):
         master.columnconfigure(1, weight=1)
         # ── saved server list ──
-        lf = ttk.LabelFrame(master, text="Сохранённые серверы", padding=6)
+        lf = ttk.LabelFrame(master, text=_("dlg.server.saved"), padding=6)
         lf.grid(row=0, column=0, columnspan=2, sticky="we", **PAD)
         lf.columnconfigure(0, weight=1)
         self.lb = tk.Listbox(lf, height=5, selectmode="single", width=36,
@@ -95,38 +95,39 @@ class ServerChooserDialog(ModalDialog):
         self.lb.bind("<Double-1>", lambda e: self._on_ok())
         btf = ttk.Frame(lf)
         btf.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
-        ttk.Button(btf, text="Удалить", width=10,
+        ttk.Button(btf, text=_("btn.delete"), width=10,
                    command=self._remove_selected).grid(row=0, column=0, padx=(0, 4))
 
         # ── kerberos info ──
         krb_frame = ttk.Frame(master)
         krb_frame.grid(row=1, column=0, columnspan=2, sticky="we", padx=8, pady=(2, 0))
         if self._krb_ticket:
-            ttk.Label(krb_frame, text="✓ Билет Kerberos: %s" % (self._krb_principal or "получен"),
+            ttk.Label(krb_frame,
+                      text=_("dlg.server.ticket_ok") % (self._krb_principal or _("dlg.server.ticket_obtained")),
                       foreground="#226622").pack(side="left")
         else:
-            ttk.Label(krb_frame, text="✗ Билет Kerberos не найден",
+            ttk.Label(krb_frame, text=_("dlg.server.ticket_none"),
                       foreground="#888").pack(side="left")
 
         # ── connection form ──
-        cf = ttk.LabelFrame(master, text="Параметры подключения", padding=6)
+        cf = ttk.LabelFrame(master, text=_("dlg.server.params"), padding=6)
         cf.grid(row=2, column=0, columnspan=2, sticky="we", **PAD)
         cf.columnconfigure(1, weight=1)
 
-        ttk.Label(cf, text="Сервер (имя или IP):").grid(
+        ttk.Label(cf, text=_("dlg.server.host")).grid(
             row=0, column=0, sticky="e", **PAD)
         self.srv_var = tk.StringVar()
         self.srv_entry = ttk.Entry(cf, textvariable=self.srv_var, width=28)
         self.srv_entry.grid(row=0, column=1, sticky="we", **PAD)
 
-        ttk.Label(cf, text="Пользователь:").grid(row=1, column=0, sticky="e", **PAD)
+        ttk.Label(cf, text=_("dlg.server.user")).grid(row=1, column=0, sticky="e", **PAD)
         self.user_var = tk.StringVar()
         self.user_entry = ttk.Entry(cf, textvariable=self.user_var, width=28)
         self.user_entry.grid(row=1, column=1, sticky="we", **PAD)
-        ttk.Label(cf, text="(user, DOMAIN\\user, user@realm)",
+        ttk.Label(cf, text=_("dlg.server.user_hint"),
                   foreground="#666").grid(row=2, column=1, sticky="w", padx=8)
 
-        ttk.Label(cf, text="Пароль:").grid(row=3, column=0, sticky="e", **PAD)
+        ttk.Label(cf, text=_("dlg.server.password")).grid(row=3, column=0, sticky="e", **PAD)
         self.pass_var = tk.StringVar()
         self.pass_entry = ttk.Entry(cf, textvariable=self.pass_var,
                                     show="•", width=28)
@@ -134,7 +135,7 @@ class ServerChooserDialog(ModalDialog):
 
         self.krb_var = tk.BooleanVar(value=False)
         self.krb_cb = ttk.Checkbutton(
-            cf, text="Использовать данные Kerberos для входа",
+            cf, text=_("dlg.server.use_kerberos"),
             variable=self.krb_var, command=self._on_krb_toggle,
             state="normal" if self._krb_ticket else "disabled")
         self.krb_cb.grid(row=4, column=0, columnspan=2, sticky="w", padx=8, pady=(4, 2))
@@ -193,10 +194,10 @@ class ServerChooserDialog(ModalDialog):
         server = self.srv_var.get().strip()
         user = self.user_var.get().strip()
         if not server:
-            raise backend.DnsBackendError("Укажите имя или адрес сервера.")
+            raise backend.DnsBackendError(_("err.no_server_name"))
         use_krb = self.krb_var.get() and self._krb_ticket
         if not use_krb and not user:
-            raise backend.DnsBackendError("Укажите имя пользователя.")
+            raise backend.DnsBackendError(_("err.no_username"))
         return {
             "server": server,
             "username": user,
@@ -211,15 +212,15 @@ class ZoneDialog(ModalDialog):
 
     def __init__(self, parent, kind="forward"):
         self._kind = kind
-        super().__init__(parent, "Создание новой зоны")
+        super().__init__(parent, _("dlg.zone.title"))
 
     def build_body(self, master):
         self.kind_var = tk.StringVar(value=self._kind)
-        ttk.Radiobutton(master, text="Зона прямого просмотра",
+        ttk.Radiobutton(master, text=_("dlg.zone.forward"),
                         variable=self.kind_var, value="forward",
                         command=self._update).grid(
             row=0, column=0, columnspan=2, sticky="w", **PAD)
-        ttk.Radiobutton(master, text="Зона обратного просмотра (reverse)",
+        ttk.Radiobutton(master, text=_("dlg.zone.reverse"),
                         variable=self.kind_var, value="reverse",
                         command=self._update).grid(
             row=1, column=0, columnspan=2, sticky="w", **PAD)
@@ -232,15 +233,15 @@ class ZoneDialog(ModalDialog):
         self.preview = ttk.Label(master, text="", foreground="#666")
         self.preview.grid(row=4, column=0, columnspan=2, sticky="w", **PAD)
         ttk.Label(master, foreground="#666", wraplength=380, text=(
-            "Зона будет создана как основная (primary), интегрированная в AD."
+            _("dlg.zone.note")
         )).grid(row=5, column=0, columnspan=2, sticky="w", **PAD)
         self._update()
 
     def _update(self):
         self.prompt.config(
-            text=("Имя зоны (например, corp.example.ru):"
+            text=(_("dlg.zone.prompt_forward")
                   if self.kind_var.get() == "forward"
-                  else "ИД сети (192.168.1, 10.0.0.0/16) или *.in-addr.arpa:"))
+                  else _("dlg.zone.prompt_reverse")))
         self._preview()
         self.entry.focus_set()
 
@@ -248,7 +249,7 @@ class ZoneDialog(ModalDialog):
         text = ""
         if self.kind_var.get() == "reverse" and self.value_var.get().strip():
             try:
-                text = "Имя зоны: %s" % backend.reverse_zone_name(self.value_var.get())
+                text = _("dlg.zone.preview") % backend.reverse_zone_name(self.value_var.get())
             except backend.DnsBackendError:
                 pass
         self.preview.config(text=text)
@@ -258,27 +259,29 @@ class ZoneDialog(ModalDialog):
     def validate(self):
         value = self.value_var.get().strip()
         if not value:
-            raise backend.DnsBackendError("Заполните поле имени зоны.")
+            raise backend.DnsBackendError(_("err.zone_empty"))
         if self.kind_var.get() == "reverse":
             zone = backend.reverse_zone_name(value)
         else:
             zone = value.rstrip(".").lower()
             if backend.is_reverse_zone(zone):
                 raise backend.DnsBackendError(
-                    "Для обратной зоны выберите переключатель выше.")
+                    _("err.zone_reverse_radio"))
         return {"zone": zone}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-RECORD_TYPE_INFO = {
-    "A":     "Сопоставляет имя хоста с IPv4-адресом",
-    "AAAA":  "Сопоставляет имя хоста с IPv6-адресом",
-    "CNAME": "Псевдоним (алиас) для другого имени хоста",
-    "MX":    "Почтовый сервер домена",
-    "PTR":   "Обратное сопоставление: IP-адрес → имя хоста",
-    "SRV":   "Местоположение службы (хост и порт)",
-    "TXT":   "Произвольная текстовая информация (SPF и т.п.)",
-}
+def record_type_info(rtype):
+    """Пояснение к типу записи (переводится в момент вызова)."""
+    return {
+        "A":     _("rtype.a"),
+        "AAAA":  _("rtype.aaaa"),
+        "CNAME": _("rtype.cname"),
+        "MX":    _("rtype.mx"),
+        "PTR":   _("rtype.ptr"),
+        "SRV":   _("rtype.srv"),
+        "TXT":   _("rtype.txt"),
+    }.get(rtype, "")
 
 
 class RecordDialog(ModalDialog):
@@ -292,17 +295,17 @@ class RecordDialog(ModalDialog):
         self._field_vars = {}
         self._field_widgets = []
         location = "%s/%s" % (zone, self.folder) if self.folder else zone
-        title = ("Изменение записи — %s" % location if record
-                 else "Новая запись — %s" % location)
+        title = (_("dlg.record.title_edit") % location if record
+                 else _("dlg.record.title_new") % location)
         super().__init__(parent, title)
 
     def build_body(self, master):
         master.columnconfigure(1, weight=1)
         if self.folder:
             ttk.Label(master, foreground="#666",
-                      text="Папка: %s" % self.folder).grid(
+                      text=_("label.folder_path") % self.folder).grid(
                 row=0, column=0, columnspan=2, sticky="w", **PAD)
-        ttk.Label(master, text="Тип записи:").grid(row=1, column=0, sticky="e", **PAD)
+        ttk.Label(master, text=_("dlg.record.type")).grid(row=1, column=0, sticky="e", **PAD)
         types = list(backend.EDITABLE_TYPES)
         default_type = "PTR" if self.is_reverse else "A"
         if self.record:
@@ -320,7 +323,7 @@ class RecordDialog(ModalDialog):
         self.fields_frame.columnconfigure(1, weight=1)
         ttk.Separator(master).grid(row=4, column=0, columnspan=2,
                                    sticky="we", padx=8, pady=6)
-        ttk.Label(master, text="TTL (секунды):").grid(row=5, column=0, sticky="e", **PAD)
+        ttk.Label(master, text=_("dlg.record.ttl")).grid(row=5, column=0, sticky="e", **PAD)
         self.ttl_var = tk.StringVar(
             value=str(self.record["ttl"]) if self.record else "900")
         ttk.Spinbox(master, textvariable=self.ttl_var, from_=0,
@@ -353,53 +356,53 @@ class RecordDialog(ModalDialog):
             w.destroy()
         self._field_vars = {}; self._field_widgets = []
         rtype = self.type_var.get()
-        self.type_hint.config(text=RECORD_TYPE_INFO.get(rtype, ""))
+        self.type_hint.config(text=record_type_info(rtype))
         rec = self.record; f = rec["fields"] if rec else {}
         name = rec["name"] if rec else ""; nd = rec is not None
-        here = "сама папка" if self.folder else "сама зона"; r = 0
+        here = _("dlg.record.here_folder") if self.folder else _("dlg.record.here_zone"); r = 0
         if rtype in ("A", "AAAA"):
-            self._add_field(r, "Имя (пусто или @ — %s):" % here, "name",
+            self._add_field(r, _("dlg.record.name_a") % here, "name",
                             name, disabled=nd); r += 1
-            self._add_field(r, "IPv4-адрес:" if rtype == "A" else "IPv6-адрес:",
+            self._add_field(r, _("dlg.record.ipv4") if rtype == "A" else _("dlg.record.ipv6"),
                             "ip", f.get("ip", "")); r += 1
             if rtype == "A" and not rec and not self.is_reverse:
                 self.ptr_var = tk.BooleanVar(value=False)
                 ttk.Checkbutton(self.fields_frame,
-                                text="Создать связанную PTR-запись",
+                                text=_("dlg.record.make_ptr"),
                                 variable=self.ptr_var).grid(
                     row=r, column=0, columnspan=2, sticky="w", **PAD)
         elif rtype == "CNAME":
-            self._add_field(r, "Псевдоним:", "name", name, disabled=nd); r += 1
-            self._add_field(r, "FQDN целевого узла:", "target", f.get("target", ""))
+            self._add_field(r, _("dlg.record.alias"), "name", name, disabled=nd); r += 1
+            self._add_field(r, _("dlg.record.cname_target"), "target", f.get("target", ""))
         elif rtype == "MX":
-            self._add_field(r, "Имя (@ — %s):" % here, "name",
+            self._add_field(r, _("dlg.record.name_at") % here, "name",
                             name or "@", disabled=nd); r += 1
-            self._add_field(r, "FQDN почтового сервера:", "exchange",
+            self._add_field(r, _("dlg.record.mx_exchange"), "exchange",
                             f.get("exchange", "")); r += 1
-            self._add_field(r, "Приоритет:", "preference",
+            self._add_field(r, _("dlg.record.priority"), "preference",
                             f.get("preference", 10), spin=True)
         elif rtype == "PTR":
-            lbl = ("IP-адрес (или последние октеты):"
-                   if self.is_reverse and not self.folder else "Имя записи:")
+            lbl = (_("dlg.record.ptr_ip")
+                   if self.is_reverse and not self.folder else _("dlg.record.ptr_name"))
             self._add_field(r, lbl, "name", name, disabled=nd); r += 1
-            self._add_field(r, "Имя узла (FQDN):", "host", f.get("host", ""))
+            self._add_field(r, _("dlg.record.ptr_host"), "host", f.get("host", ""))
         elif rtype == "SRV":
             if rec:
-                self._add_field(r, "Служба.протокол:", "name", name, disabled=True); r += 1
+                self._add_field(r, _("dlg.record.srv_name"), "name", name, disabled=True); r += 1
             else:
-                self._add_field(r, "Служба (например _ldap):", "service", "_"); r += 1
-                self._add_field(r, "Протокол:", "protocol", "_tcp",
+                self._add_field(r, _("dlg.record.srv_service"), "service", "_"); r += 1
+                self._add_field(r, _("dlg.record.srv_protocol"), "protocol", "_tcp",
                                 combo=("_tcp", "_udp", "_tls", "_msdcs")); r += 1
-            self._add_field(r, "Приоритет:", "priority",
+            self._add_field(r, _("dlg.record.priority"), "priority",
                             f.get("priority", 0), spin=True); r += 1
-            self._add_field(r, "Вес:", "weight",
+            self._add_field(r, _("dlg.record.weight"), "weight",
                             f.get("weight", 100), spin=True); r += 1
-            self._add_field(r, "Порт:", "port", f.get("port", ""), spin=True); r += 1
-            self._add_field(r, "Узел службы (FQDN):", "target", f.get("target", ""))
+            self._add_field(r, _("dlg.record.port"), "port", f.get("port", ""), spin=True); r += 1
+            self._add_field(r, _("dlg.record.srv_target"), "target", f.get("target", ""))
         elif rtype == "TXT":
-            self._add_field(r, "Имя (@ — %s):" % here, "name",
+            self._add_field(r, _("dlg.record.name_at") % here, "name",
                             name, disabled=nd); r += 1
-            self._add_field(r, "Текст:", "text", f.get("text", ""), width=44)
+            self._add_field(r, _("dlg.record.txt_text"), "text", f.get("text", ""), width=44)
         for w in self._field_widgets:
             if str(w.cget("state")) != "disabled":
                 w.focus_set(); break
@@ -413,7 +416,7 @@ class RecordDialog(ModalDialog):
             service = vals.pop("service", "")
             protocol = vals.pop("protocol", "")
             if not service or service == "_":
-                raise backend.DnsBackendError("Укажите имя службы.")
+                raise backend.DnsBackendError(_("err.srv_no_service"))
             service = service if service.startswith("_") else "_" + service
             protocol = protocol if protocol.startswith("_") else "_" + protocol
             name = "%s.%s" % (service, protocol)
@@ -431,3 +434,65 @@ class RecordDialog(ModalDialog):
                              and self.ptr_var.get()
                              and rtype == "A" and not self.record),
         }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+class DeleteConfirmDialog(ModalDialog):
+    """
+    Подтверждение удаления нескольких записей: показывает прокручиваемый
+    список удаляемых записей (имя/тип/данные). result=True при подтверждении.
+
+    records — список словарей с ключами name, type_name, data (уже готовые
+    к показу: '@' при необходимости заменён вызывающей стороной).
+    skipped — сколько элементов пропущено (папки/NS/SOA) — для примечания.
+    """
+
+    def __init__(self, parent, records, skipped=0):
+        self._records = records
+        self._skipped = skipped
+        super().__init__(parent, _("title.delete_record"))
+
+    def build_body(self, master):
+        n = len(self._records)
+        ttk.Label(master, text=_("dlg.delete.header") % n).grid(
+            row=0, column=0, sticky="w", **PAD)
+
+        frame = ttk.Frame(master)
+        frame.grid(row=1, column=0, sticky="nsew", **PAD)
+        master.rowconfigure(1, weight=1)
+        master.columnconfigure(0, weight=1)
+
+        cols = ("type", "data")
+        lst = ttk.Treeview(frame, columns=cols, show="tree headings",
+                           selectmode="none", height=min(max(n, 3), 14))
+        lst.heading("#0", text=_("col.name"))
+        lst.heading("type", text=_("col.type"))
+        lst.heading("data", text=_("col.data"))
+        lst.column("#0", width=220, anchor="w")
+        lst.column("type", width=70, anchor="w", stretch=False)
+        lst.column("data", width=340, anchor="w")
+        vs = ttk.Scrollbar(frame, orient="vertical", command=lst.yview)
+        lst.configure(yscrollcommand=vs.set)
+        lst.grid(row=0, column=0, sticky="nsew")
+        vs.grid(row=0, column=1, sticky="ns")
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+        for r in self._records:
+            lst.insert("", "end", text=" " + r["name"],
+                       values=(r["type_name"], r["data"]))
+
+        if self._skipped:
+            ttk.Label(master, foreground="#a05a00", wraplength=560,
+                      text=_("dlg.delete.skipped") % self._skipped).grid(
+                row=2, column=0, sticky="w", **PAD)
+        ttk.Label(master, foreground="#666",
+                  text=_("dlg.delete.irreversible")).grid(
+            row=3, column=0, sticky="w", **PAD)
+        # Кнопка по умолчанию — Отмена (безопаснее при пакетном удалении).
+        self.ok_btn.configure(default="normal")
+
+    def focus_first(self):
+        self.ok_btn.focus_set()
+
+    def validate(self):
+        return True
