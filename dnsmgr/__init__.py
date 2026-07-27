@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 """DNS Manager для Samba DC — пакет вспомогательных модулей."""
 
-__version__ = "3.5.0"
+__version__ = "3.4.0"

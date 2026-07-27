@@ -2,6 +2,16 @@
 """
 Главное окно DNS Manager (в стиле Microsoft DNS Manager).
 
+Версия 3.2:
+  * пиктограммы записей в правой панели: обычная запись, папка,
+    запись «только чтение» (NS, SOA);
+  * имя сервера в дереве выделено жирным шрифтом.
+
+Версия 3.0:
+  * несколько серверов одновременно — каждый отдельный узел в дереве;
+  * вход по логину/паролю или по билету Kerberos (GSSAPI);
+  * список серверов хранится в ~/.config/dns-manager/dns-manager.ini;
+  * пиктограммы на кнопках панели инструментов.
 """
 
 import queue
@@ -12,8 +22,7 @@ from tkinter import messagebox, ttk
 
 from . import backend, config, i18n, icons
 from .backend import DnsBackend, friendly_error
-from .dialogs import (
-    DeleteConfirmDialog, RecordDialog, ServerChooserDialog, ZoneDialog)
+from .dialogs import RecordDialog, ServerChooserDialog, ZoneDialog
 
 def APP_TITLE():
     return _("app.title")
@@ -166,7 +175,7 @@ class MainWindow:
         # Колонка #0 («дерево») показывает пиктограмму и имя записи
         cols = ("type", "data", "ttl")
         self.records = ttk.Treeview(right, columns=cols, show="tree headings",
-                                    selectmode="extended")
+                                    selectmode="browse")
         self.records.heading("#0", text=_("col.name"),
                              command=lambda: self._sort_records("name"))
         self.records.heading("type", text=_("col.type"), command=lambda: self._sort_records("type_name"))
@@ -610,78 +619,28 @@ class MainWindow:
 
         self.run_async(work, done, _("status.editing_record"))
 
-    def _selected_records(self):
-        """
-        Все выбранные в правой панели записи, годные к удалению.
-
-        Возвращает (records, skipped): records — список записей обычных типов
-        (папки и нередактируемые NS/SOA отфильтрованы); skipped — сколько
-        элементов выбора отброшено.
-        """
-        st = self._active_state()
-        if st is None:
-            return [], 0
-        records, skipped = [], 0
-        for iid in self.records.selection():
-            if iid.startswith("folder|"):
-                skipped += 1
-                continue
-            try:
-                rec = st.records[int(iid)]
-            except (ValueError, IndexError, AttributeError):
-                skipped += 1
-                continue
-            if rec["type_name"] not in backend.EDITABLE_TYPES:
-                skipped += 1  # NS/SOA и прочие нередактируемые
-                continue
-            records.append(rec)
-        return records, skipped
-
     def action_delete_record(self):
         st = self._active_state()
-        if st is None:
-            return
-        recs, skipped = self._selected_records()
-        if not recs:
-            if skipped:
-                messagebox.showinfo(_("title.delete_record"),
-                                    _("msg.nothing_deletable"),
-                                    parent=self.root)
-            else:
-                messagebox.showinfo(_("title.records"),
-                                    _("msg.select_record"), parent=self.root)
+        rec = self._selected_record()
+        if st is None or rec is None:
             return
         addr, zone, path, be = self.active, st.zone, st.path, st.backend
-
-        # Список для показа (с подстановкой «родительской папки» вместо '@').
-        shown = [{"name": PARENT_LABEL() if r["name"] == "@" else r["name"],
-                  "type_name": r["type_name"], "data": r["data"]}
-                 for r in recs]
-        dlg = DeleteConfirmDialog(self.root, shown, skipped=skipped)
-        if not dlg.result:
+        shown = PARENT_LABEL() if rec["name"] == "@" else rec["name"]
+        if not messagebox.askyesno(
+                _("title.delete_record"),
+                _("msg.delete_record_confirm") %
+                (shown, rec["type_name"], rec["data"]),
+                icon="warning", parent=self.root):
             return
 
-        targets = [(r["full_name"], r["raw"]) for r in recs]
-
         def work():
-            errors = []
-            for full_name, raw in targets:
-                try:
-                    be.delete_record(zone, full_name, raw)
-                except Exception as e:  # noqa: BLE001
-                    errors.append(friendly_error(e))
-            return be.get_node(zone, path), errors
+            be.delete_record(zone, rec["full_name"], rec["raw"])
+            return be.get_node(zone, path)
 
-        def done(result):
-            node, errors = result
+        def done(node):
             cur = self.servers.get(addr)
             if cur and (cur.zone, cur.path) == (zone, path):
                 self._apply_node(addr, zone, path, node)
-            if errors:
-                messagebox.showwarning(
-                    _("title.delete_record"),
-                    _("msg.delete_partial") % (len(errors), "\n".join(errors)),
-                    parent=self.root)
 
         self.run_async(work, done, _("status.deleting_record"))
 
@@ -766,8 +725,7 @@ class MainWindow:
     def _on_delete_key(self):
         foc = self.root.focus_get()
         if foc == self.records and self.records.selection():
-            # Удаляем, если в выборе есть хотя бы одна удаляемая запись.
-            if any(self._is_deletable_iid(i) for i in self.records.selection()):
+            if not self.records.selection()[0].startswith("folder|"):
                 self.action_delete_record()
         elif foc == self.tree:
             sel = self.tree.selection()
@@ -798,24 +756,16 @@ class MainWindow:
 
     def _records_context_menu(self, event):
         iid = self.records.identify_row(event.y)
-        # Не сбрасываем множественный выбор: меняем его только если клик был
-        # по строке вне текущего выбора.
-        if iid and iid not in self.records.selection():
+        if iid:
             self.records.selection_set(iid)
-        sel = self.records.selection()
         menu = tk.Menu(self.root, tearoff=0)
         menu.add_command(label=_("menu.new_record"), command=self.action_new_record)
-        if iid and iid.startswith("folder|") and len(sel) <= 1:
+        if iid and iid.startswith("folder|"):
             menu.add_command(label=_("menu.open_folder"),
                              command=lambda p=iid.split("|", 1)[1]: self._open_folder(p))
-        else:
-            rec_items = [i for i in sel if not i.startswith("folder|")]
-            if len(rec_items) == 1 and self._is_deletable_iid(rec_items[0]):
-                menu.add_command(label=_("menu.edit_record"),
-                                 command=self.action_edit_record)
-            if any(self._is_deletable_iid(i) for i in rec_items):
-                menu.add_command(label=_("menu.delete_record"),
-                                 command=self.action_delete_record)
+        elif iid:
+            menu.add_command(label=_("menu.edit_record"), command=self.action_edit_record)
+            menu.add_command(label=_("menu.delete_record"), command=self.action_delete_record)
         menu.add_separator()
         menu.add_command(label=_("menu.refresh"), command=self.action_refresh)
         menu.tk_popup(event.x_root, event.y_root)
@@ -837,34 +787,16 @@ class MainWindow:
         zone_sel = has_server and info is not None and info["kind"] == "zone"
         node_sel = has_server and info is not None and info["kind"] in ("zone", "node")
         server_sel = has_server and info is not None and info["kind"] == "server"
-        rec_sel = self.records.selection()
-        # Записи в выборе (без папок).
-        rec_items = [i for i in rec_sel if not i.startswith("folder|")]
-        # Удаление доступно, если выбрана хотя бы одна удаляемая запись
-        # (обычного типа). Правка — только когда выбрана ровно одна.
-        deletable = node_sel and any(
-            self._is_deletable_iid(i) for i in rec_items)
-        edit_ok = node_sel and len(rec_items) == 1 and \
-            self._is_deletable_iid(rec_items[0])
+        rec_sel = sel_rec = self.records.selection()
+        rec_ok = node_sel and bool(rec_sel) and not rec_sel[0].startswith("folder|")
         s = lambda ok: "normal" if ok else "disabled"  # noqa: E731
         self.btn_connect.config(state=s(not busy))
         self.btn_refresh.config(state=s(has_server))
         self.btn_new_zone.config(state=s(has_server))
         self.btn_del_zone.config(state=s(zone_sel))
         self.btn_new_rec.config(state=s(node_sel))
-        self.btn_edit_rec.config(state=s(edit_ok))
-        self.btn_del_rec.config(state=s(deletable))
-
-    def _is_deletable_iid(self, iid):
-        """True, если iid соответствует удаляемой записи (не папке, тип EDITABLE)."""
-        if not iid or iid.startswith("folder|"):
-            return False
-        st = self._active_state()
-        try:
-            rec = st.records[int(iid)]
-        except (ValueError, IndexError, AttributeError):
-            return False
-        return rec["type_name"] in backend.EDITABLE_TYPES
+        self.btn_edit_rec.config(state=s(rec_ok))
+        self.btn_del_rec.config(state=s(rec_ok))
 
     def _update_status(self):
         n = len(self.servers)
