@@ -4,7 +4,12 @@
 Подключается к DNS-серверу, встроенному в контроллер домена **Samba DC**,
 по протоколу MS-DNSP (DCERPC).
 
+GUI
 <img width="1234" height="747" alt="изображение" src="https://github.com/user-attachments/assets/1a05ed9d-3db9-4b43-89ea-30d8b809ca75" />
+
+TUI
+<img width="1178" height="681" alt="dns-manager-tui" src="https://github.com/user-attachments/assets/222d1489-5e2e-4f15-8f41-61a3c8643656" />
+
 
 ## Новое в версии 4.0
 
