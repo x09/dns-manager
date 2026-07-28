@@ -1,5 +1,5 @@
 Name:          dns-manager
-Version:       3.5
+Version:       4.0
 Release:       alt1
 License:       %gpl3only
 Group:         System/Configuration/Other
@@ -12,7 +12,8 @@ Url:           https://github.com/x09/dns-manager
 BuildRequires: 	rpm-build-licenses
 
 Requires: 	python3-modules-tkinter
-Requires: 	python3-module-samba
+Requires:	python3-module-samba
+Requires:	dns-manager-common
 Requires: 	python3
 
 %description
@@ -21,6 +22,37 @@ connecting to the Samba DC's built-in DNS server via MS-DNSP (DCERPC) protocol.
 
 %description -l ru_RU.UTF-8
 Графическая утилита для GNU/Linux — аналог Microsoft DNS Manager.
+Подключается к DNS-серверу, встроенному в контроллер домена Samba DC,
+по протоколу MS-DNSP (DCERPC).
+
+# ---------------------------------------------------------------
+%package 	common
+Summary: 	Files used by dns-manager
+Group: 		System/Configuration/Other
+Requires:	python3-module-samba
+Requires: 	python3-modules-tkinter
+Requires: 	python3
+BuildArch: 	noarch
+
+%description common
+Common files by dns-manager
+
+# ---------------------------------------------------------------
+%package 	tui
+Summary: 	DNS management tui-utility for Samba AD
+Group: 		System/Configuration/Other
+Requires: 	dns-manager-common
+Requires:	python3-module-samba
+Requires: 	python3-module-urwid
+Requires: 	python3
+BuildArch: 	noarch
+
+%description tui
+A text user interface DNS management utility for GNU/Linux, similar to Microsoft DNS Manager,
+connecting to the Samba DC's built-in DNS server via MS-DNSP (DCERPC) protocol.
+
+%description -l ru_RU.UTF-8 tui
+Консольная утилита для GNU/Linux — аналог Microsoft DNS Manager.
 Подключается к DNS-серверу, встроенному в контроллер домена Samba DC,
 по протоколу MS-DNSP (DCERPC).
 
@@ -33,9 +65,8 @@ for language in ru en; do
 	install -m644 dnsmgr/locale/ru/LC_MESSAGES/dnsmgr.mo %buildroot/%_datadir/locale/$language/LC_MESSAGES/
 done
 
-
-mkdir -p %buildroot/%_datadir/%name/dnsmgr
-cp dnsmgr/*.py %buildroot/%_datadir/%name/dnsmgr/
+mkdir -p %buildroot/%_datadir/%name/dnsmgr/tui
+cp -r dnsmgr/* %buildroot/%_datadir/%name/dnsmgr/
 
 mkdir -p  %buildroot/%_desktopdir
 cp %name.desktop %buildroot/%_desktopdir/%name.desktop
@@ -48,7 +79,9 @@ done
 
 mkdir -p %buildroot/%_bindir/
 cp %name.py %buildroot/%_bindir/dns-manager
+cp %name-tui.py %buildroot/%_bindir/dns-manager-tui
 chmod 755 %buildroot/%_bindir/dns-manager
+chmod 755 %buildroot/%_bindir/dns-manager-tui
 
 %post
 
@@ -58,11 +91,24 @@ chmod 755 %buildroot/%_bindir/dns-manager
 %_bindir/dns-manager
 %_iconsdir/hicolor/*
 %_desktopdir/%name.desktop
+
+%files common
 %_datadir/%name/dnsmgr/*
 %_datadir/locale/ru/LC_MESSAGES/*
 %_datadir/locale/en/LC_MESSAGES/*
 
+%files tui
+%_bindir/dns-manager-tui
+
 %changelog
+* Tue Jul 28 2026 Anton Shevtsov <shevtsov.anton@gmail.com> 4.0-alt1
+- Added TUI (Text User Interface) version
+- Split the project into three separate RPM packages
+
+* Thu Jul 23 2026 Anton Shevtsov <shevtsov.anton@gmail.com> 3.5-alt1
+- Implemented export to CSV format
+- Updated and redesigned the About window
+
 * Thu Jul 23 2026 Anton Shevtsov <shevtsov.anton@gmail.com> 3.5-alt1
 - Batch DNS record deletion with filtering
 
