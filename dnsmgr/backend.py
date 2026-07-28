@@ -45,6 +45,38 @@ TYPE_NAMES = {
 # Типы, которые пользователь может создавать/править (по ТЗ)
 EDITABLE_TYPES = ("A", "AAAA", "CNAME", "MX", "PTR", "SRV", "TXT")
 
+# Понятные имена типов в стиле Microsoft DNS Manager (для экспорта в CSV).
+# Всегда по-английски — как в MS DNS Manager.
+MS_TYPE_NAMES = {
+    "A": "Host (A)",
+    "AAAA": "IPv6 Host (AAAA)",
+    "CNAME": "Alias (CNAME)",
+    "MX": "Mail Exchanger (MX)",
+    "NS": "Name Server (NS)",
+    "PTR": "Pointer (PTR)",
+    "SOA": "Start of Authority (SOA)",
+    "SRV": "Service Location (SRV)",
+    "TXT": "Text (TXT)",
+}
+
+
+def ms_type_name(type_name):
+    """Имя типа в стиле MS DNS Manager; для неизвестных — как есть."""
+    return MS_TYPE_NAMES.get(type_name, type_name)
+
+
+def export_row(record, parent_label):
+    """
+    Возвращает кортеж (name, type, data) для одной строки CSV-экспорта.
+
+    record — словарь записи (из get_node/iter_zone_records);
+    parent_label — что показывать вместо '@' (например «[Same as parent folder]»).
+    Имя берётся из export_name (полный путь) при экспорте зоны либо из name.
+    """
+    raw_name = record.get("export_name", record.get("name", ""))
+    name = parent_label if raw_name in ("@", "") else raw_name
+    return (name, ms_type_name(record["type_name"]), record["data"])
+
 # Понятные сообщения для кодов ошибок Win32/WERROR.
 # Функция (а не словарь-константа), чтобы перевод брался в момент вызова
 # после инициализации локали.
@@ -621,10 +653,28 @@ class DnsBackend:
         records, folders = [], []
         if res is None:
             return {"records": records, "folders": folders}
+        qpath = (node_path or "").rstrip(".").lower()
+        zone_l = (zone_name or "").rstrip(".").lower()
         for node in res.rec:
-            display, full = node_names(node_path, node.dnsNodeName.str)
+            raw = node.dnsNodeName.str
+            raw_l = (raw or "").rstrip(".").lower()
+            # Узел, который является САМИМ опрашиваемым узлом (а не потомком).
+            # Samba может вернуть апекс зоны под именем '@', либо под FQDN зоны
+            # (raw == zone_name) при опросе корня, либо именем, совпадающим с
+            # опрашиваемым путём. Такой узел нормализуем в '@' и НЕ считаем
+            # папкой — иначе он попадёт в свои же подпапки и даст бесконечную
+            # рекурсию (test.alt -> test.alt.test.alt -> ...).
+            is_self = (raw in ("", "@") or raw_l == qpath or
+                       (not qpath and raw_l == zone_l))
+            if is_self:
+                display, full = "@", (node_path or "@")
+            else:
+                display, full = node_names(node_path, raw)
             child_count = getattr(node, "dwChildCount", 0)
-            if child_count and display != "@":
+            # Дополнительная страховка от самоссылки: путь папки обязан
+            # отличаться от опрашиваемого пути.
+            full_l = (full or "").rstrip(".").lower()
+            if child_count and not is_self and full_l != qpath:
                 folders.append({"name": display, "path": full})
             for j in range(node.wRecordCount):
                 rec = node.records[j]
@@ -641,6 +691,37 @@ class DnsBackend:
                 })
         folders.sort(key=lambda f: f["name"].lower())
         return {"records": records, "folders": folders}
+
+    def iter_zone_records(self, zone_name):
+        """
+        Рекурсивно обходит зону и возвращает список ВСЕХ записей, включая
+        вложенные служебные папки (_sites, _tcp, DomainDnsZones и т.д.).
+
+        Для каждой записи имя (ключ "name") — это полный путь относительно
+        зоны ('@' для самого корня зоны), как показывает MS DNS Manager при
+        экспорте. Порядок: сначала записи узла, затем его подпапки (обход в
+        глубину). Защита от циклов — по уже посещённым путям.
+        """
+        self._check()
+        result = []
+        seen = set()
+        stack = [""]  # пути узлов относительно зоны; '' — корень
+        while stack:
+            path = stack.pop(0)
+            if path in seen:
+                continue
+            seen.add(path)
+            node = self.get_node(zone_name, path)
+            for r in node["records"]:
+                # В корне зоны имя '@' сохраняем; в подпапке — полный путь.
+                item = dict(r)
+                item["export_name"] = r["full_name"] or "@"
+                result.append(item)
+            # Подпапки обойти после записей текущего узла.
+            children = [f["path"] for f in node["folders"]
+                        if f["path"] not in seen]
+            stack = children + stack
+        return result
 
     def add_record(self, zone_name, name, rec):
         """name — полное имя относительно зоны (или '@')."""

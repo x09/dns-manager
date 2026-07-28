@@ -91,6 +91,52 @@ def remove_server(server):
         _write(parser)
 
 
+#: Ширина левой панели TUI по умолчанию (в колонках экрана).
+TUI_LEFT_WIDTH_DEFAULT = 34
+#: Допустимый диапазон, чтобы панель не оказалась нечитаемой/во весь экран.
+TUI_LEFT_WIDTH_MIN = 16
+TUI_LEFT_WIDTH_MAX = 120
+
+
+def load_tui_left_width():
+    """
+    Ширина левой панели TUI (дерево серверов/зон) в колонках экрана.
+    Читается из [settings] tui_left_width; при отсутствии/ошибке — значение
+    по умолчанию. Значение зажимается в [MIN, MAX].
+    """
+    parser = configparser.ConfigParser()
+    try:
+        if parser.read(_CONFIG_FILE, encoding="utf-8"):
+            if parser.has_section(_SETTINGS_SECTION):
+                raw = parser[_SETTINGS_SECTION].get(
+                    "tui_left_width", "").strip()
+                if raw:
+                    val = int(raw)
+                    return max(TUI_LEFT_WIDTH_MIN,
+                               min(TUI_LEFT_WIDTH_MAX, val))
+    except (OSError, configparser.Error, ValueError):
+        pass
+    return TUI_LEFT_WIDTH_DEFAULT
+
+
+def save_tui_left_width(width):
+    """Сохраняет ширину левой панели TUI (колонки экрана), зажимая в диапазон."""
+    try:
+        width = int(width)
+    except (TypeError, ValueError):
+        return
+    width = max(TUI_LEFT_WIDTH_MIN, min(TUI_LEFT_WIDTH_MAX, width))
+    parser = configparser.ConfigParser()
+    try:
+        parser.read(_CONFIG_FILE, encoding="utf-8")
+    except (OSError, configparser.Error):
+        pass
+    if not parser.has_section(_SETTINGS_SECTION):
+        parser.add_section(_SETTINGS_SECTION)
+    parser[_SETTINGS_SECTION]["tui_left_width"] = str(width)
+    _write(parser)
+
+
 def load_language():
     """
     Возвращает сохранённый код языка интерфейса ('ru' или 'en') или None,

@@ -434,3 +434,144 @@ class RecordDialog(ModalDialog):
                              and self.ptr_var.get()
                              and rtype == "A" and not self.record),
         }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+class DeleteConfirmDialog(ModalDialog):
+    """
+    Подтверждение удаления нескольких записей: показывает прокручиваемый
+    список удаляемых записей (имя/тип/данные). result=True при подтверждении.
+
+    records — список словарей с ключами name, type_name, data (уже готовые
+    к показу: '@' при необходимости заменён вызывающей стороной).
+    skipped — сколько элементов пропущено (папки/NS/SOA) — для примечания.
+    """
+
+    def __init__(self, parent, records, skipped=0):
+        self._records = records
+        self._skipped = skipped
+        super().__init__(parent, _("title.delete_record"))
+
+    def build_body(self, master):
+        n = len(self._records)
+        ttk.Label(master, text=_("dlg.delete.header") % n).grid(
+            row=0, column=0, sticky="w", **PAD)
+
+        frame = ttk.Frame(master)
+        frame.grid(row=1, column=0, sticky="nsew", **PAD)
+        master.rowconfigure(1, weight=1)
+        master.columnconfigure(0, weight=1)
+
+        cols = ("type", "data")
+        lst = ttk.Treeview(frame, columns=cols, show="tree headings",
+                           selectmode="none", height=min(max(n, 3), 14))
+        lst.heading("#0", text=_("col.name"))
+        lst.heading("type", text=_("col.type"))
+        lst.heading("data", text=_("col.data"))
+        lst.column("#0", width=220, anchor="w")
+        lst.column("type", width=70, anchor="w", stretch=False)
+        lst.column("data", width=340, anchor="w")
+        vs = ttk.Scrollbar(frame, orient="vertical", command=lst.yview)
+        lst.configure(yscrollcommand=vs.set)
+        lst.grid(row=0, column=0, sticky="nsew")
+        vs.grid(row=0, column=1, sticky="ns")
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+        for r in self._records:
+            lst.insert("", "end", text=" " + r["name"],
+                       values=(r["type_name"], r["data"]))
+
+        if self._skipped:
+            ttk.Label(master, foreground="#a05a00", wraplength=560,
+                      text=_("dlg.delete.skipped") % self._skipped).grid(
+                row=2, column=0, sticky="w", **PAD)
+        ttk.Label(master, foreground="#666",
+                  text=_("dlg.delete.irreversible")).grid(
+            row=3, column=0, sticky="w", **PAD)
+        # Кнопка по умолчанию — Отмена (безопаснее при пакетном удалении).
+        self.ok_btn.configure(default="normal")
+
+    def focus_first(self):
+        self.ok_btn.focus_set()
+
+    def validate(self):
+        return True
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+def open_url(url):
+    """
+    Открывает URL в браузере по умолчанию через xdg-open (Linux).
+    Запускается в фоне, не блокируя интерфейс; ошибки подавляются.
+    """
+    import subprocess
+    try:
+        subprocess.Popen(
+            ["xdg-open", url],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except (OSError, ValueError):
+        # Резервный вариант — стандартный модуль webbrowser.
+        try:
+            import webbrowser
+            webbrowser.open(url)
+            return True
+        except Exception:
+            return False
+
+
+class AboutDialog(tk.Toplevel):
+    """
+    Окно «О программе» с кликабельной ссылкой на сайт проекта.
+
+    Своё окно (а не messagebox), потому что стандартный messagebox не умеет
+    показывать кликабельные ссылки — только простой текст.
+    """
+
+    def __init__(self, parent, version, url):
+        super().__init__(parent)
+        self.withdraw()
+        self.title(_("menu.about"))
+        self.resizable(False, False)
+        self.transient(parent)
+        self._url = url
+
+        body = ttk.Frame(self, padding=14)
+        body.grid(row=0, column=0, sticky="nsew")
+
+        ttk.Label(body, text=_("msg.about") % version,
+                  justify="left").grid(row=0, column=0, sticky="w")
+
+        # Строка со ссылкой: подпись + кликабельный URL.
+        link_row = ttk.Frame(body)
+        link_row.grid(row=1, column=0, sticky="w", pady=(10, 0))
+        ttk.Label(link_row, text=_("about.site")).pack(side="left")
+        link = tk.Label(link_row, text=url, fg="#1a5fb4", cursor="hand2")
+        # Подчёркнутый шрифт, как у ссылки.
+        import tkinter.font as tkfont
+        f = tkfont.Font(font=link.cget("font"))
+        f.configure(underline=True)
+        link.configure(font=f)
+        link.pack(side="left", padx=(4, 0))
+        link.bind("<Button-1>", lambda e: open_url(self._url))
+
+        btns = ttk.Frame(self, padding=(14, 0, 14, 12))
+        btns.grid(row=1, column=0, sticky="e")
+        ok = ttk.Button(btns, text=_("btn.ok"), width=12,
+                        command=self.destroy, default="active")
+        ok.grid(row=0, column=0)
+
+        self.bind("<Return>", lambda e: self.destroy())
+        self.bind("<Escape>", lambda e: self.destroy())
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+        self.update_idletasks()
+        px, py = parent.winfo_rootx(), parent.winfo_rooty()
+        pw, ph = parent.winfo_width(), parent.winfo_height()
+        w, h = self.winfo_reqwidth(), self.winfo_reqheight()
+        self.geometry("+%d+%d" % (px + max((pw - w) // 2, 0),
+                                  py + max((ph - h) // 3, 0)))
+        self.deiconify()
+        self.grab_set()
+        ok.focus_set()
+        self.wait_window(self)

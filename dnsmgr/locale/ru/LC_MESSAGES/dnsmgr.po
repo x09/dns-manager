@@ -1,10 +1,8 @@
 msgid ""
-msgstr ""
-"Project-Id-Version: dns-manager 3.4\n"
-"Language: ru\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+msgstr "Project-Id-Version: dns-manager 3.4\nLanguage: ru\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "about.site"
+msgstr "Сайт проекта:"
 
 msgid "app.title"
 msgstr "Диспетчер DNS — Samba DC"
@@ -56,6 +54,24 @@ msgstr "[%d], основной сервер: %s, ответственный: %s"
 
 msgid "data.unknown_type"
 msgstr "<данные типа 0x%x>"
+
+msgid "dlg.delete.header"
+msgstr "Будут удалены следующие записи (%d):"
+
+msgid "dlg.delete.irreversible"
+msgstr "Действие необратимо."
+
+msgid "dlg.delete.skipped"
+msgstr "Пропущено элементов (папки или нередактируемые записи NS/SOA): %d"
+
+msgid "dlg.export.all"
+msgstr "Все файлы"
+
+msgid "dlg.export.csv"
+msgstr "CSV-файлы (с табуляцией)"
+
+msgid "dlg.export.title"
+msgstr "Экспорт в CSV-файл"
 
 msgid "dlg.record.alias"
 msgstr "Псевдоним:"
@@ -339,6 +355,9 @@ msgstr "Изменить запись..."
 msgid "menu.exit"
 msgstr "Выход"
 
+msgid "menu.export_list"
+msgstr "Экспортировать список..."
+
 msgid "menu.file"
 msgstr "Файл"
 
@@ -366,6 +385,9 @@ msgstr "Диспетчер DNS для Samba DC, версия %s\n\nАналог 
 msgid "msg.already_connected"
 msgstr "Сервер %s уже подключён."
 
+msgid "msg.delete_partial"
+msgstr "Не удалось удалить часть записей (%d):\n%s"
+
 msgid "msg.delete_record_confirm"
 msgstr "Удалить запись?\n\nИмя: %s\nТип: %s\nДанные: %s"
 
@@ -375,6 +397,12 @@ msgstr "Удалить зону «%s» на сервере %s со всеми з
 msgid "msg.disconnect_confirm"
 msgstr "Отключиться от сервера %s?"
 
+msgid "msg.export_nothing"
+msgstr "Нет записей для экспорта."
+
+msgid "msg.export_ok"
+msgstr "Экспортировано записей: %d\nФайл: %s"
+
 msgid "msg.is_folder"
 msgstr "Это папка. Откройте её двойным щелчком."
 
@@ -383,6 +411,9 @@ msgstr "Язык интерфейса изменён. Изменения вст�
 
 msgid "msg.need_server"
 msgstr "Подключитесь к серверу (кнопка «Подключиться»)."
+
+msgid "msg.nothing_deletable"
+msgstr "Среди выбранного нет записей, которые можно удалить (папки и записи NS/SOA не удаляются)."
 
 msgid "msg.ptr_failed"
 msgstr "PTR-запись не создана: %s"
@@ -444,6 +475,9 @@ msgstr "Удаление зоны %s..."
 msgid "status.editing_record"
 msgstr "Изменение записи..."
 
+msgid "status.exporting"
+msgstr "Экспорт..."
+
 msgid "status.full"
 msgstr "Серверов: %d  |  Активный: %s  |  %s  |  Записей: %d, папок: %d"
 
@@ -489,6 +523,9 @@ msgstr "Изменение записи"
 msgid "title.error"
 msgstr "Ошибка"
 
+msgid "title.export"
+msgstr "Экспорт"
+
 msgid "title.new_record"
 msgstr "Новая запись"
 
@@ -512,3 +549,42 @@ msgstr "Зоны прямого просмотра"
 
 msgid "tree.reverse_zones"
 msgstr "Зоны обратного просмотра"
+
+msgid "tui.about.open_site"
+msgstr "Открыть сайт"
+
+msgid "tui.export.path"
+msgstr "Файл CSV:"
+
+msgid "tui.fk.connect"
+msgstr "Подкл"
+
+msgid "tui.fk.delete"
+msgstr "Удал"
+
+msgid "tui.fk.edit"
+msgstr "Правка"
+
+msgid "tui.fk.export"
+msgstr "Эксп"
+
+msgid "tui.fk.mark"
+msgstr "Пометить"
+
+msgid "tui.fk.menu"
+msgstr "Меню"
+
+msgid "tui.fk.newzone"
+msgstr "Создать"
+
+msgid "tui.fk.quit"
+msgstr "Выход"
+
+msgid "tui.fk.refresh"
+msgstr "Обнов"
+
+msgid "tui.panel.records"
+msgstr "Записи"
+
+msgid "tui.panel.servers"
+msgstr "Серверы и зоны"

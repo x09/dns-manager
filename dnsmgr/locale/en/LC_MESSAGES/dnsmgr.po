@@ -1,10 +1,8 @@
 msgid ""
-msgstr ""
-"Project-Id-Version: dns-manager 3.4\n"
-"Language: en\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+msgstr "Project-Id-Version: dns-manager 3.4\nLanguage: en\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "about.site"
+msgstr "Project website:"
 
 msgid "app.title"
 msgstr "DNS Manager — Samba DC"
@@ -56,6 +54,24 @@ msgstr "[%d], primary server: %s, responsible: %s"
 
 msgid "data.unknown_type"
 msgstr "<data of type 0x%x>"
+
+msgid "dlg.delete.header"
+msgstr "The following records will be deleted (%d):"
+
+msgid "dlg.delete.irreversible"
+msgstr "This action cannot be undone."
+
+msgid "dlg.delete.skipped"
+msgstr "Skipped items (folders or non-editable NS/SOA records): %d"
+
+msgid "dlg.export.all"
+msgstr "All files"
+
+msgid "dlg.export.csv"
+msgstr "CSV files (tab-separated)"
+
+msgid "dlg.export.title"
+msgstr "Export to CSV file"
 
 msgid "dlg.record.alias"
 msgstr "Alias:"
@@ -339,6 +355,9 @@ msgstr "Edit record..."
 msgid "menu.exit"
 msgstr "Exit"
 
+msgid "menu.export_list"
+msgstr "Export List..."
+
 msgid "menu.file"
 msgstr "File"
 
@@ -366,6 +385,9 @@ msgstr "DNS Manager for Samba DC, version %s\n\nA Microsoft DNS Manager analog f
 msgid "msg.already_connected"
 msgstr "Server %s is already connected."
 
+msgid "msg.delete_partial"
+msgstr "Failed to delete some records (%d):\n%s"
+
 msgid "msg.delete_record_confirm"
 msgstr "Delete record?\n\nName: %s\nType: %s\nData: %s"
 
@@ -375,6 +397,12 @@ msgstr "Delete zone \"%s\" on server %s with all its records?\nThis action canno
 msgid "msg.disconnect_confirm"
 msgstr "Disconnect from server %s?"
 
+msgid "msg.export_nothing"
+msgstr "There are no records to export."
+
+msgid "msg.export_ok"
+msgstr "Records exported: %d\nFile: %s"
+
 msgid "msg.is_folder"
 msgstr "This is a folder. Open it with a double click."
 
@@ -383,6 +411,9 @@ msgstr "The interface language has been changed. The changes will take effect af
 
 msgid "msg.need_server"
 msgstr "Connect to a server (the \"Connect\" button)."
+
+msgid "msg.nothing_deletable"
+msgstr "There are no deletable records in the selection (folders and NS/SOA records cannot be deleted)."
 
 msgid "msg.ptr_failed"
 msgstr "PTR record not created: %s"
@@ -444,6 +475,9 @@ msgstr "Deleting zone %s..."
 msgid "status.editing_record"
 msgstr "Editing record..."
 
+msgid "status.exporting"
+msgstr "Exporting..."
+
 msgid "status.full"
 msgstr "Servers: %d  |  Active: %s  |  %s  |  Records: %d, folders: %d"
 
@@ -489,6 +523,9 @@ msgstr "Edit record"
 msgid "title.error"
 msgstr "Error"
 
+msgid "title.export"
+msgstr "Export"
+
 msgid "title.new_record"
 msgstr "New record"
 
@@ -512,3 +549,42 @@ msgstr "Forward lookup zones"
 
 msgid "tree.reverse_zones"
 msgstr "Reverse lookup zones"
+
+msgid "tui.about.open_site"
+msgstr "Open website"
+
+msgid "tui.export.path"
+msgstr "CSV file:"
+
+msgid "tui.fk.connect"
+msgstr "Conn"
+
+msgid "tui.fk.delete"
+msgstr "Del"
+
+msgid "tui.fk.edit"
+msgstr "Edit"
+
+msgid "tui.fk.export"
+msgstr "Exp"
+
+msgid "tui.fk.mark"
+msgstr "Mark"
+
+msgid "tui.fk.menu"
+msgstr "Menu"
+
+msgid "tui.fk.newzone"
+msgstr "New"
+
+msgid "tui.fk.quit"
+msgstr "Quit"
+
+msgid "tui.fk.refresh"
+msgstr "Refr"
+
+msgid "tui.panel.records"
+msgstr "Records"
+
+msgid "tui.panel.servers"
+msgstr "Servers and zones"

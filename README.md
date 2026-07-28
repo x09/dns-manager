@@ -6,6 +6,46 @@
 
 <img width="1234" height="747" alt="изображение" src="https://github.com/user-attachments/assets/1a05ed9d-3db9-4b43-89ea-30d8b809ca75" />
 
+## Новое в версии 4.0
+
+- **Консольная (TUI) версия — `dns-manager-tui`.** Отдельное приложение
+  с тем же функционалом, работает в терминале и по SSH (без X-сервера).
+  Интерфейс в стиле Midnight Commander: слева дерево серверов/зон/папок,
+  справа записи, внизу статусная строка и подсказка F-клавиш.
+  Построен на библиотеке **urwid** (в ОС Альт — пакет
+  `python3-module-urwid`); пакет `dnsmgr` общий для GUI и TUI
+  (backend, Kerberos, конфиг и переводы переиспользуются без изменений).
+
+  Клавиши:
+
+  | Клавиша | Действие |
+  |---|---|
+  | `Tab` | переключение между панелями |
+  | `Enter` | раскрыть узел / открыть зону; в правой панели — правка записи |
+  | `Ins` / `Space` | пометить/снять пометку записи (для группового удаления) |
+  | `F2` | подключиться к серверу |
+  | `F4` | изменить запись |
+  | `F5` | обновить |
+  | `F6` | экспорт в CSV (помеченные записи или вся зона) |
+  | `F7` | создать зону (левая панель) / запись (правая) |
+  | `F8` / `Del` | удалить зону (левая) / помеченные записи (правая) |
+  | `F9` | меню (отключение, язык интерфейса, о программе) |
+  | `F10` / `q` | выход |
+
+  Групповое удаление: пометьте записи `Ins` (звёздочка слева, как в MC),
+  затем `F8` — появится список подтверждения. Записи NS/SOA и папки
+  не помечаются и пропускаются, как в GUI.
+
+  Ширина левой панели настраивается через конфигурационный файл
+  `~/.config/dns-manager/dns-manager.ini`, секция `[settings]`:
+  ```ini
+  [settings]
+  tui_left_width = 34    ; ширина левой панели в колонках (16…120)
+  ```
+
+  Запуск: `./dns-manager-tui.py` (нужны `python3-module-urwid` и
+  `python3-module-samba`; tkinter НЕ требуется).
+
 ## Новое в версии 3.6
 
 - **Экспорт записей в CSV (аналог «Export List» из MS DNS Manager).**
@@ -125,20 +165,26 @@
 ## Требования (ОС Альт)
 
 ```
+# GUI-версия:
 # apt-get install python3-modules-tkinter python3-module-samba
+# TUI-версия:
+# apt-get install python3-module-urwid python3-module-samba
 ```
 
 ## Запуск
 
 ```
-chmod +x dns-manager.py   # один раз
-./dns-manager.py
+chmod +x dns-manager.py dns-manager-tui.py   # один раз
+
+./dns-manager.py       # графическая версия (tkinter)
+./dns-manager-tui.py   # консольная версия (urwid), работает и по SSH
 ```
 
 ## Состав файлов
 
 ```
-dns-manager.py          — исполняемый файл (точка входа)
+dns-manager.py          — исполняемый файл GUI (точка входа, tkinter)
+dns-manager-tui.py      — исполняемый файл TUI (точка входа, urwid)
 dns-manager.desktop     — ярлык приложения (шаблон)
 icons/
     32x32/dns-manager.png
@@ -147,13 +193,19 @@ icons/
     256x256/dns-manager.png
 dnsmgr/
     __init__.py
-    backend.py          — RPC-протокол MS-DNSP, GSSAPI/Kerberos
-    config.py           — INI-конфиг серверов и языка интерфейса
-    kerberos.py         — определение билета Kerberos (klist)
-    i18n.py             — локализация (gettext), выбор языка
-    icons.py            — пиктограммы кнопок (PNG 20×20 в base64)
-    dialogs.py          — диалоги (выбор сервера, зоны, записи)
-    mainwindow.py       — главное окно (мультисервер, дерево, записи)
+    backend.py          — RPC-протокол MS-DNSP, GSSAPI/Kerberos (общий)
+    config.py           — INI-конфиг серверов и языка интерфейса (общий)
+    kerberos.py         — определение билета Kerberos (klist) (общий)
+    i18n.py             — локализация (gettext), выбор языка (общий)
+    util.py             — общие функции (открытие URL и т.п.)
+    icons.py            — пиктограммы кнопок GUI (PNG 20×20 в base64)
+    dialogs.py          — диалоги GUI (tkinter)
+    mainwindow.py       — главное окно GUI (tkinter)
+    tui/
+        __init__.py
+        model.py        — модель дерева серверов/зон (без urwid)
+        dialogs.py      — диалоги TUI (urwid)
+        app.py          — двухпанельное TUI-приложение (urwid)
     locale/
         ru/LC_MESSAGES/
             dnsmgr.po   — русский перевод (исходник)
